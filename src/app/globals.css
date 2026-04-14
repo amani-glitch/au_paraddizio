@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #C41E24;
+  --color-primary-dark: #A01920;
+  --color-primary-light: #E8353B;
+  --color-secondary: #2D5F2D;
+  --color-secondary-light: #3A7A3A;
+  --color-accent: #F5A623;
+  --color-accent-light: #F7B94D;
+  --color-cream: #FFF8F0;
+  --color-wood: #6B3A2A;
+  --color-wood-light: #8B5A3A;
+  --color-offwhite: #FEFCF9;
+
+  --font-heading: 'Georgia', serif;
+  --font-body: system-ui, -apple-system, sans-serif;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-cream);
+  color: #1a1a1a;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-cream);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-wood-light);
+  border-radius: 4px;
+}
+
+/* Custom animations */
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}

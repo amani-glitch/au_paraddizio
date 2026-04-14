@@ -1,0 +1,411 @@
+// ============================================================
+// Au Paradizzio Pizzas - Prisma Schema
+// Database: PostgreSQL
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// Enums
+// ============================================================
+
+enum UserRole {
+  CUSTOMER
+  MANAGER
+  ADMIN
+  STAFF
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  PREPARING
+  READY
+  DELIVERING
+  DELIVERED
+  CANCELLED
+}
+
+enum OrderMode {
+  DELIVERY
+  TAKEAWAY
+  DINE_IN
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+}
+
+enum PromoType {
+  PERCENTAGE
+  FIXED
+  FREE_DELIVERY
+  FREE_PRODUCT
+}
+
+enum LoyaltyTransactionType {
+  EARNED
+  REDEEMED
+}
+
+// ============================================================
+// Models
+// ============================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String
+  phone         String?
+  role          UserRole  @default(CUSTOMER)
+  loyaltyPoints Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  addresses             Address[]
+  orders                Order[]
+  cartItems             CartItem[]
+  favorites             Favorite[]
+  loyaltyTransactions   LoyaltyTransaction[]
+  activityLogs          ActivityLog[]
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model Address {
+  id           String   @id @default(cuid())
+  userId       String
+  label        String?
+  street       String
+  city         String
+  postalCode   String
+  country      String   @default("France")
+  instructions String?
+  isDefault    Boolean  @default(false)
+  lat          Float?
+  lng          Float?
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@index([userId])
+  @@index([postalCode])
+  @@map("addresses")
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  description String?
+  image       String?
+  order       Int        @default(0)
+  parentId    String?
+  isActive    Boolean    @default(true)
+
+  parent   Category?  @relation("CategorySubcategories", fields: [parentId], references: [id], onDelete: SetNull)
+  children Category[] @relation("CategorySubcategories")
+
+  products Product[]
+
+  @@index([slug])
+  @@index([parentId])
+  @@index([order])
+  @@map("categories")
+}
+
+model Product {
+  id              String    @id @default(cuid())
+  name            String
+  slug            String    @unique
+  description     String?
+  image           String?
+  images          String[]
+  categoryId      String
+  basePrice       Decimal   @db.Decimal(10, 2)
+  isActive        Boolean   @default(true)
+  isNew           Boolean   @default(false)
+  isBestSeller    Boolean   @default(false)
+  isPromo         Boolean   @default(false)
+  isPizzaOfMonth  Boolean   @default(false)
+  allergens       String[]
+  dietary         String[]
+  nutritionalInfo Json?
+  order           Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  category    Category           @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  sizes       ProductSize[]
+  supplements ProductSupplement[]
+  orderItems  OrderItem[]
+  cartItems   CartItem[]
+  favorites   Favorite[]
+
+  @@index([slug])
+  @@index([categoryId])
+  @@index([isActive])
+  @@index([isBestSeller])
+  @@index([isPizzaOfMonth])
+  @@index([order])
+  @@map("products")
+}
+
+model ProductSize {
+  id        String  @id @default(cuid())
+  productId String
+  name      String
+  price     Decimal @db.Decimal(10, 2)
+
+  product   Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems CartItem[]
+
+  @@index([productId])
+  @@map("product_sizes")
+}
+
+model ProductSupplement {
+  id        String  @id @default(cuid())
+  productId String
+  name      String
+  price     Decimal @db.Decimal(10, 2)
+  category  String
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([category])
+  @@map("product_supplements")
+}
+
+model CartItem {
+  id                  String   @id @default(cuid())
+  userId              String?
+  sessionId           String?
+  productId           String
+  sizeId              String?
+  quantity            Int      @default(1)
+  supplements         Json?
+  removedIngredients  String[]
+  halfHalf            Json?
+  specialInstructions String?
+  createdAt           DateTime @default(now())
+
+  user    User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size    ProductSize? @relation(fields: [sizeId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([sessionId])
+  @@index([productId])
+  @@map("cart_items")
+}
+
+model Order {
+  id               String        @id @default(cuid())
+  orderNumber      String        @unique
+  userId           String?
+  status           OrderStatus   @default(PENDING)
+  mode             OrderMode
+  subtotal         Decimal       @db.Decimal(10, 2)
+  deliveryFee      Decimal       @default(0) @db.Decimal(10, 2)
+  discount         Decimal       @default(0) @db.Decimal(10, 2)
+  total            Decimal       @db.Decimal(10, 2)
+  promoCodeId      String?
+  addressId        String?
+  scheduledAt      DateTime?
+  estimatedReadyAt DateTime?
+  notes            String?
+  paymentMethod    String?
+  paymentStatus    PaymentStatus @default(PENDING)
+  stripePaymentId  String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  user      User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  promoCode PromoCode? @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
+  address   Address?   @relation(fields: [addressId], references: [id], onDelete: SetNull)
+  items     OrderItem[]
+  loyaltyTransactions LoyaltyTransaction[]
+
+  @@index([orderNumber])
+  @@index([userId])
+  @@index([status])
+  @@index([mode])
+  @@index([paymentStatus])
+  @@index([createdAt])
+  @@index([scheduledAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id                  String  @id @default(cuid())
+  orderId             String
+  productId           String
+  productName         String
+  sizeName            String?
+  sizePrice           Decimal? @db.Decimal(10, 2)
+  quantity            Int     @default(1)
+  supplements         Json?
+  removedIngredients  String[]
+  halfHalf            Json?
+  specialInstructions String?
+  unitPrice           Decimal @db.Decimal(10, 2)
+  totalPrice          Decimal @db.Decimal(10, 2)
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model PromoCode {
+  id                    String    @id @default(cuid())
+  code                  String    @unique
+  type                  PromoType
+  value                 Decimal   @db.Decimal(10, 2)
+  minOrderAmount        Decimal?  @db.Decimal(10, 2)
+  maxUses               Int?
+  currentUses           Int       @default(0)
+  validFrom             DateTime
+  validUntil            DateTime
+  isActive              Boolean   @default(true)
+  targetFirstOrder      Boolean   @default(false)
+  restrictedCategoryIds String[]
+  restrictedProductIds  String[]
+
+  orders Order[]
+
+  @@index([code])
+  @@index([isActive])
+  @@index([validFrom, validUntil])
+  @@map("promo_codes")
+}
+
+model DeliveryZone {
+  id                String   @id @default(cuid())
+  name              String
+  postalCodes       String[]
+  radiusKm          Float?
+  deliveryFee       Decimal  @db.Decimal(10, 2)
+  minOrderAmount    Decimal  @db.Decimal(10, 2)
+  estimatedMinutes  Int
+  freeDeliveryAbove Decimal? @db.Decimal(10, 2)
+  isActive          Boolean  @default(true)
+
+  @@index([isActive])
+  @@map("delivery_zones")
+}
+
+model LoyaltyTransaction {
+  id          String                 @id @default(cuid())
+  userId      String
+  orderId     String?
+  points      Int
+  type        LoyaltyTransactionType
+  description String?
+  createdAt   DateTime               @default(now())
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([orderId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("loyalty_transactions")
+}
+
+model StoreSettings {
+  id                  String  @id @default("singleton")
+  name                String  @default("Au Paradizzio Pizzas")
+  address             String?
+  phone               String?
+  email               String?
+  logo                String?
+  favicon             String?
+  deliveryEnabled     Boolean @default(true)
+  takeawayEnabled     Boolean @default(true)
+  dineInEnabled       Boolean @default(false)
+  maxOrdersPerSlot    Int     @default(10)
+  slotDurationMinutes Int     @default(15)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  openingHours    OpeningHours[]
+  specialClosings SpecialClosing[]
+
+  @@map("store_settings")
+}
+
+model OpeningHours {
+  id              String @id @default(cuid())
+  storeSettingsId String
+  dayOfWeek       Int
+  openTime        String
+  closeTime       String
+  isClosed        Boolean @default(false)
+
+  storeSettings StoreSettings @relation(fields: [storeSettingsId], references: [id], onDelete: Cascade)
+
+  @@index([storeSettingsId])
+  @@index([dayOfWeek])
+  @@map("opening_hours")
+}
+
+model SpecialClosing {
+  id              String   @id @default(cuid())
+  storeSettingsId String
+  date            DateTime
+  reason          String?
+
+  storeSettings StoreSettings @relation(fields: [storeSettingsId], references: [id], onDelete: Cascade)
+
+  @@index([storeSettingsId])
+  @@index([date])
+  @@map("special_closings")
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+  @@map("favorites")
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  details   Json?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("activity_logs")
+}
