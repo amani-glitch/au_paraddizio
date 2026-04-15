@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import {
   Bell,
@@ -20,13 +20,14 @@ import {
   X,
   Check,
   CircleDot,
+  Loader2,
 } from "lucide-react";
 import { formatPrice, cn } from "@/lib/utils";
-import { mockAdminOrders } from "@/lib/admin-data";
 import { formatDistanceToNow, format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
+import toast from "react-hot-toast";
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+// ---- Types ----
 
 type OrderStatus =
   | "PENDING"
@@ -59,27 +60,27 @@ interface Order {
   createdAt: string;
 }
 
-// ─── Constants ──────────────────────────────────────────────────────────────
+// ---- Constants ----
 
 const STATUS_CONFIG: Record<
   OrderStatus,
   { label: string; bg: string; text: string }
 > = {
   PENDING: { label: "En attente", bg: "bg-yellow-100", text: "text-yellow-800" },
-  ACCEPTED: { label: "Acceptée", bg: "bg-blue-100", text: "text-blue-800" },
+  ACCEPTED: { label: "Acceptee", bg: "bg-blue-100", text: "text-blue-800" },
   PREPARING: {
-    label: "En préparation",
+    label: "En preparation",
     bg: "bg-orange-100",
     text: "text-orange-800",
   },
-  READY: { label: "Prête", bg: "bg-green-100", text: "text-green-800" },
+  READY: { label: "Prete", bg: "bg-green-100", text: "text-green-800" },
   DELIVERING: {
     label: "En livraison",
     bg: "bg-purple-100",
     text: "text-purple-800",
   },
-  DELIVERED: { label: "Livrée", bg: "bg-gray-100", text: "text-gray-800" },
-  CANCELLED: { label: "Annulée", bg: "bg-red-100", text: "text-red-800" },
+  DELIVERED: { label: "Livree", bg: "bg-gray-100", text: "text-gray-800" },
+  CANCELLED: { label: "Annulee", bg: "bg-red-100", text: "text-red-800" },
 };
 
 const MODE_CONFIG: Record<
@@ -93,7 +94,7 @@ const MODE_CONFIG: Record<
     icon: Truck,
   },
   TAKEAWAY: {
-    label: "À emporter",
+    label: "A emporter",
     bg: "bg-orange-100",
     text: "text-orange-700",
     icon: ShoppingBag,
@@ -109,18 +110,18 @@ const MODE_CONFIG: Record<
 const STATUS_FILTER_OPTIONS: { value: string; label: string }[] = [
   { value: "ALL", label: "Toutes" },
   { value: "PENDING", label: "En attente" },
-  { value: "ACCEPTED", label: "Acceptées" },
-  { value: "PREPARING", label: "En préparation" },
-  { value: "READY", label: "Prêtes" },
+  { value: "ACCEPTED", label: "Acceptees" },
+  { value: "PREPARING", label: "En preparation" },
+  { value: "READY", label: "Pretes" },
   { value: "DELIVERING", label: "En livraison" },
-  { value: "DELIVERED", label: "Livrées" },
-  { value: "CANCELLED", label: "Annulées" },
+  { value: "DELIVERED", label: "Livrees" },
+  { value: "CANCELLED", label: "Annulees" },
 ];
 
 const MODE_FILTER_OPTIONS: { value: string; label: string }[] = [
   { value: "ALL", label: "Tous" },
   { value: "DELIVERY", label: "Livraison" },
-  { value: "TAKEAWAY", label: "À emporter" },
+  { value: "TAKEAWAY", label: "A emporter" },
   { value: "DINE_IN", label: "Sur place" },
 ];
 
@@ -133,7 +134,7 @@ const STATUS_FLOW: OrderStatus[] = [
   "DELIVERED",
 ];
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// ---- Helpers ----
 
 function getNextStatus(
   status: OrderStatus,
@@ -158,20 +159,27 @@ function getRelativeTime(dateStr: string): string {
 }
 
 function getCompactItems(items: OrderItem[]): string {
-  return items.map((i) => `${i.qty}x ${i.name} ${i.size}`).join(", ");
+  return items.map((i) => `${i.qty}x ${i.name}${i.size ? ` ${i.size}` : ""}`).join(", ");
 }
 
 function todayString(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-// ─── Component ──────────────────────────────────────────────────────────────
+// ---- Skeleton ----
+
+function Skeleton({ className }: { className?: string }) {
+  return (
+    <div className={cn("animate-pulse rounded-lg bg-gray-200", className)} />
+  );
+}
+
+// ---- Component ----
 
 export default function CommandesPage() {
   // State
-  const [orders, setOrders] = useState<Order[]>(
-    () => [...mockAdminOrders] as Order[]
-  );
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [modeFilter, setModeFilter] = useState("ALL");
@@ -180,6 +188,26 @@ export default function CommandesPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
+
+  // Fetch orders
+  const fetchOrders = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/orders");
+      if (!res.ok) throw new Error("Erreur lors du chargement des commandes");
+      const data: Order[] = await res.json();
+      setOrders(data);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Impossible de charger les commandes"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   // Derived data
   const filteredOrders = useMemo(() => {
@@ -196,7 +224,7 @@ export default function CommandesPage() {
             return false;
         }
         if (dateFilter) {
-          const orderDate = o.createdAt.slice(0, 10);
+          const orderDate = (o.createdAt ?? "").slice(0, 10);
           if (orderDate !== dateFilter) return false;
         }
         return true;
@@ -209,7 +237,7 @@ export default function CommandesPage() {
 
   const stats = useMemo(() => {
     const todayOrders = orders.filter(
-      (o) => o.createdAt.slice(0, 10) === todayString()
+      (o) => (o.createdAt ?? "").slice(0, 10) === todayString()
     );
     return {
       pending: todayOrders.filter((o) => o.status === "PENDING").length,
@@ -227,15 +255,33 @@ export default function CommandesPage() {
   const pendingCount = orders.filter((o) => o.status === "PENDING").length;
 
   // Handlers
-  function handleStatusChange(orderId: string, newStatus: OrderStatus) {
+  async function handleStatusChange(orderId: string, orderNumber: string, currentStatus: OrderStatus, newStatus: OrderStatus) {
+    // Optimistic update
     setOrders((prev) =>
       prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
     );
+
+    try {
+      const res = await fetch(`/api/orders/${orderNumber}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error("Erreur lors de la mise a jour du statut");
+    } catch (err) {
+      // Revert
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: currentStatus } : o))
+      );
+      toast.error(
+        err instanceof Error ? err.message : "Impossible de mettre a jour le statut"
+      );
+    }
   }
 
-  function handleCancelOrder(orderId: string) {
+  async function handleCancelOrder(orderId: string, orderNumber: string, currentStatus: OrderStatus) {
     if (confirm("Voulez-vous vraiment annuler cette commande ?")) {
-      handleStatusChange(orderId, "CANCELLED");
+      await handleStatusChange(orderId, orderNumber, currentStatus, "CANCELLED");
     }
   }
 
@@ -245,8 +291,32 @@ export default function CommandesPage() {
     setTimeout(() => setCopiedAddress(null), 2000);
   }
 
-  // ─── Render ───────────────────────────────────────────────────────────────
+  // ---- Loading ----
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-cream">
+        <div className="sticky top-0 z-30 border-b border-wood/10 bg-white shadow-sm">
+          <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-8 w-32" />
+          </div>
+        </div>
+        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 space-y-4">
+          <Skeleton className="h-12 w-full" />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 w-full" />
+            ))}
+          </div>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
+  // ---- Render ----
   return (
     <div className="min-h-screen bg-cream">
       {/* Header bar */}
@@ -261,7 +331,7 @@ export default function CommandesPage() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
               </span>
-              Temps réel
+              Temps reel
             </span>
           </div>
           <div className="flex items-center gap-3">
@@ -279,7 +349,7 @@ export default function CommandesPage() {
                   ? "bg-secondary/10 text-secondary hover:bg-secondary/20"
                   : "bg-gray-100 text-gray-400 hover:bg-gray-200"
               )}
-              title={soundEnabled ? "Désactiver le son" : "Activer le son"}
+              title={soundEnabled ? "Desactiver le son" : "Activer le son"}
             >
               {soundEnabled ? (
                 <Bell className="h-5 w-5" />
@@ -342,7 +412,7 @@ export default function CommandesPage() {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Rechercher n° commande ou client..."
+              placeholder="Rechercher n commande ou client..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded-lg border border-gray-200 py-1.5 pl-9 pr-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
@@ -367,13 +437,13 @@ export default function CommandesPage() {
             </p>
           </div>
           <div className="rounded-xl border-l-4 border-l-orange-400 bg-white p-3 shadow-sm">
-            <p className="text-xs font-medium text-gray-500">En préparation</p>
+            <p className="text-xs font-medium text-gray-500">En preparation</p>
             <p className="mt-1 text-2xl font-bold text-orange-600">
               {stats.preparing}
             </p>
           </div>
           <div className="rounded-xl border-l-4 border-l-green-400 bg-white p-3 shadow-sm">
-            <p className="text-xs font-medium text-gray-500">Prêtes</p>
+            <p className="text-xs font-medium text-gray-500">Pretes</p>
             <p className="mt-1 text-2xl font-bold text-green-600">
               {stats.ready}
             </p>
@@ -399,8 +469,17 @@ export default function CommandesPage() {
 
           {filteredOrders.map((order) => {
             const isExpanded = expandedId === order.id;
-            const statusCfg = STATUS_CONFIG[order.status];
-            const modeCfg = MODE_CONFIG[order.mode];
+            const statusCfg = STATUS_CONFIG[order.status] ?? {
+              label: order.status,
+              bg: "bg-gray-100",
+              text: "text-gray-800",
+            };
+            const modeCfg = MODE_CONFIG[order.mode] ?? {
+              label: order.mode,
+              bg: "bg-gray-100",
+              text: "text-gray-700",
+              icon: ShoppingBag,
+            };
             const ModeIcon = modeCfg.icon;
             const nextStatus = getNextStatus(order.status, order.mode);
 
@@ -500,7 +579,7 @@ export default function CommandesPage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleStatusChange(order.id, "ACCEPTED");
+                            handleStatusChange(order.id, order.orderNumber, order.status, "ACCEPTED");
                           }}
                           className="inline-flex items-center gap-1.5 rounded-lg bg-secondary px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-secondary-light"
                         >
@@ -510,7 +589,7 @@ export default function CommandesPage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleCancelOrder(order.id);
+                            handleCancelOrder(order.id, order.orderNumber, order.status);
                           }}
                           className="inline-flex items-center gap-1.5 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-red-600"
                         >
@@ -523,31 +602,31 @@ export default function CommandesPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleStatusChange(order.id, "PREPARING");
+                          handleStatusChange(order.id, order.orderNumber, order.status, "PREPARING");
                         }}
                         className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-orange-600"
                       >
                         <ChefHat className="h-3.5 w-3.5" />
-                        En préparation
+                        En preparation
                       </button>
                     )}
                     {order.status === "PREPARING" && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleStatusChange(order.id, "READY");
+                          handleStatusChange(order.id, order.orderNumber, order.status, "READY");
                         }}
                         className="inline-flex items-center gap-1.5 rounded-lg bg-green-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-green-600"
                       >
                         <Check className="h-3.5 w-3.5" />
-                        Prête
+                        Prete
                       </button>
                     )}
                     {order.status === "READY" && order.mode === "DELIVERY" && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleStatusChange(order.id, "DELIVERING");
+                          handleStatusChange(order.id, order.orderNumber, order.status, "DELIVERING");
                         }}
                         className="inline-flex items-center gap-1.5 rounded-lg bg-purple-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-purple-600"
                       >
@@ -559,24 +638,24 @@ export default function CommandesPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleStatusChange(order.id, "DELIVERED");
+                          handleStatusChange(order.id, order.orderNumber, order.status, "DELIVERED");
                         }}
                         className="inline-flex items-center gap-1.5 rounded-lg bg-green-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-green-600"
                       >
                         <Check className="h-3.5 w-3.5" />
-                        Récupérée
+                        Recuperee
                       </button>
                     )}
                     {order.status === "DELIVERING" && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleStatusChange(order.id, "DELIVERED");
+                          handleStatusChange(order.id, order.orderNumber, order.status, "DELIVERED");
                         }}
                         className="inline-flex items-center gap-1.5 rounded-lg bg-green-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-green-600"
                       >
                         <Check className="h-3.5 w-3.5" />
-                        Livrée
+                        Livree
                       </button>
                     )}
 
@@ -586,7 +665,7 @@ export default function CommandesPage() {
                         onClick={(e) => e.stopPropagation()}
                         className="text-xs text-gray-500 underline hover:text-primary"
                       >
-                        Voir détails
+                        Voir details
                       </Link>
                     </div>
                   </div>
@@ -599,7 +678,7 @@ export default function CommandesPage() {
                       {/* Items list */}
                       <div>
                         <h3 className="mb-2 text-sm font-semibold text-wood">
-                          Articles commandés
+                          Articles commandes
                         </h3>
                         <div className="rounded-lg border border-gray-200 bg-white">
                           <table className="w-full text-sm">
@@ -607,7 +686,7 @@ export default function CommandesPage() {
                               <tr className="border-b border-gray-100 text-left text-xs text-gray-500">
                                 <th className="px-3 py-2">Article</th>
                                 <th className="px-3 py-2">Taille</th>
-                                <th className="px-3 py-2 text-center">Qté</th>
+                                <th className="px-3 py-2 text-center">Qte</th>
                                 <th className="px-3 py-2 text-right">Prix</th>
                               </tr>
                             </thead>
@@ -621,7 +700,7 @@ export default function CommandesPage() {
                                     {item.name}
                                   </td>
                                   <td className="px-3 py-2 text-gray-500">
-                                    {item.size}
+                                    {item.size || "-"}
                                   </td>
                                   <td className="px-3 py-2 text-center">
                                     {item.qty}
@@ -659,13 +738,15 @@ export default function CommandesPage() {
                             <p className="text-sm font-medium text-gray-800">
                               {order.customerName}
                             </p>
-                            <a
-                              href={`tel:${order.customerPhone}`}
-                              className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
-                            >
-                              <Phone className="h-3.5 w-3.5" />
-                              {order.customerPhone}
-                            </a>
+                            {order.customerPhone && (
+                              <a
+                                href={`tel:${order.customerPhone}`}
+                                className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                              >
+                                <Phone className="h-3.5 w-3.5" />
+                                {order.customerPhone}
+                              </a>
+                            )}
                             {order.mode === "DELIVERY" && order.address && (
                               <div className="flex items-start gap-2 rounded-md bg-blue-50 p-2">
                                 <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600" />
@@ -684,7 +765,7 @@ export default function CommandesPage() {
                                   >
                                     <Copy className="h-3 w-3" />
                                     {copiedAddress === order.id
-                                      ? "Copié !"
+                                      ? "Copie !"
                                       : "Copier l'adresse"}
                                   </button>
                                 </div>
@@ -700,7 +781,7 @@ export default function CommandesPage() {
                           </h3>
                           <div className="rounded-lg border border-gray-200 bg-white p-3">
                             <div className="flex items-center justify-between text-sm">
-                              <span className="text-gray-500">Méthode</span>
+                              <span className="text-gray-500">Methode</span>
                               <span className="font-medium">
                                 Carte bancaire
                               </span>
@@ -709,7 +790,7 @@ export default function CommandesPage() {
                               <span className="text-gray-500">Statut</span>
                               <span className="inline-flex items-center gap-1 text-green-600 font-medium">
                                 <CircleDot className="h-3 w-3" />
-                                Payé
+                                Paye
                               </span>
                             </div>
                           </div>
@@ -725,29 +806,28 @@ export default function CommandesPage() {
                               <div className="flex items-center gap-2 text-xs">
                                 <span className="h-2 w-2 rounded-full bg-green-500" />
                                 <span className="text-gray-500">
-                                  {format(
-                                    parseISO(order.createdAt),
-                                    "HH:mm",
-                                    { locale: fr }
-                                  )}
+                                  {(() => {
+                                    try {
+                                      return format(
+                                        parseISO(order.createdAt),
+                                        "HH:mm",
+                                        { locale: fr }
+                                      );
+                                    } catch {
+                                      return "--:--";
+                                    }
+                                  })()}
                                 </span>
                                 <span className="text-gray-700">
-                                  Commande reçue
+                                  Commande recue
                                 </span>
                               </div>
                               {order.status !== "PENDING" &&
                                 order.status !== "CANCELLED" && (
                                   <div className="flex items-center gap-2 text-xs">
                                     <span className="h-2 w-2 rounded-full bg-blue-500" />
-                                    <span className="text-gray-500">
-                                      {format(
-                                        parseISO(order.createdAt),
-                                        "HH:mm",
-                                        { locale: fr }
-                                      )}
-                                    </span>
                                     <span className="text-gray-700">
-                                      Commande acceptée
+                                      Commande acceptee
                                     </span>
                                   </div>
                                 )}
@@ -757,15 +837,8 @@ export default function CommandesPage() {
                                 order.status === "DELIVERED") && (
                                 <div className="flex items-center gap-2 text-xs">
                                   <span className="h-2 w-2 rounded-full bg-orange-500" />
-                                  <span className="text-gray-500">
-                                    {format(
-                                      parseISO(order.createdAt),
-                                      "HH:mm",
-                                      { locale: fr }
-                                    )}
-                                  </span>
                                   <span className="text-gray-700">
-                                    Préparation lancée
+                                    Preparation lancee
                                   </span>
                                 </div>
                               )}
@@ -774,30 +847,16 @@ export default function CommandesPage() {
                                 order.status === "DELIVERED") && (
                                 <div className="flex items-center gap-2 text-xs">
                                   <span className="h-2 w-2 rounded-full bg-green-500" />
-                                  <span className="text-gray-500">
-                                    {format(
-                                      parseISO(order.createdAt),
-                                      "HH:mm",
-                                      { locale: fr }
-                                    )}
-                                  </span>
                                   <span className="text-gray-700">
-                                    Commande prête
+                                    Commande prete
                                   </span>
                                 </div>
                               )}
                               {order.status === "CANCELLED" && (
                                 <div className="flex items-center gap-2 text-xs">
                                   <span className="h-2 w-2 rounded-full bg-red-500" />
-                                  <span className="text-gray-500">
-                                    {format(
-                                      parseISO(order.createdAt),
-                                      "HH:mm",
-                                      { locale: fr }
-                                    )}
-                                  </span>
                                   <span className="text-gray-700">
-                                    Commande annulée
+                                    Commande annulee
                                   </span>
                                 </div>
                               )}
@@ -834,7 +893,7 @@ export default function CommandesPage() {
                         {order.status !== "CANCELLED" &&
                           order.status !== "DELIVERED" && (
                             <button
-                              onClick={() => handleCancelOrder(order.id)}
+                              onClick={() => handleCancelOrder(order.id, order.orderNumber, order.status)}
                               className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
                             >
                               <X className="h-3.5 w-3.5" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -36,118 +36,90 @@ const statusColors: Record<OrderStatus, string> = {
   CANCELLED: "bg-red-100 text-red-700",
 };
 
-const recentOrders: Order[] = [
-  {
-    id: "order-1",
-    orderNumber: "PAR-20260410-A7F2",
-    status: "DELIVERED",
-    mode: "DELIVERY",
-    items: [
-      {
-        id: "oi-1",
-        productName: "Margherita",
-        sizeName: "33 cm",
-        sizePrice: 10.5,
-        quantity: 2,
-        supplements: [{ name: "Extra mozzarella", price: 1.5 }],
-        removedIngredients: [],
-        unitPrice: 12,
-        totalPrice: 24,
-      },
-      {
-        id: "oi-2",
-        productName: "Tiramisu Maison",
-        sizeName: "Portion",
-        sizePrice: 5.5,
-        quantity: 1,
-        supplements: [],
-        removedIngredients: [],
-        unitPrice: 5.5,
-        totalPrice: 5.5,
-      },
-    ],
-    subtotal: 29.5,
-    deliveryFee: 0,
-    discount: 0,
-    total: 29.5,
-    paymentMethod: "card",
-    paymentStatus: "paid",
-    createdAt: "2026-04-10T19:30:00Z",
-  },
-  {
-    id: "order-2",
-    orderNumber: "PAR-20260407-K9D1",
-    status: "PREPARING",
-    mode: "TAKEAWAY",
-    items: [
-      {
-        id: "oi-3",
-        productName: "4 Fromages",
-        sizeName: "40 cm",
-        sizePrice: 16.5,
-        quantity: 1,
-        supplements: [],
-        removedIngredients: [],
-        unitPrice: 16.5,
-        totalPrice: 16.5,
-      },
-    ],
-    subtotal: 16.5,
-    deliveryFee: 0,
-    discount: 0,
-    total: 16.5,
-    paymentMethod: "card",
-    paymentStatus: "paid",
-    createdAt: "2026-04-07T18:45:00Z",
-  },
-  {
-    id: "order-3",
-    orderNumber: "PAR-20260401-B3E5",
-    status: "DELIVERED",
-    mode: "DELIVERY",
-    items: [
-      {
-        id: "oi-4",
-        productName: "Corsica",
-        sizeName: "33 cm",
-        sizePrice: 14,
-        quantity: 1,
-        supplements: [],
-        removedIngredients: [],
-        unitPrice: 14,
-        totalPrice: 14,
-      },
-      {
-        id: "oi-5",
-        productName: "Coca-Cola",
-        sizeName: "33 cl",
-        sizePrice: 2.5,
-        quantity: 2,
-        supplements: [],
-        removedIngredients: [],
-        unitPrice: 2.5,
-        totalPrice: 5,
-      },
-    ],
-    subtotal: 19,
-    deliveryFee: 0,
-    discount: 0,
-    total: 19,
-    paymentMethod: "cash",
-    paymentStatus: "paid",
-    createdAt: "2026-04-01T20:00:00Z",
-  },
-];
+function mapApiOrderToOrder(apiOrder: Record<string, unknown>): Order {
+  const items = (apiOrder.items as Record<string, unknown>[]) ?? [];
+  return {
+    id: (apiOrder.id as string) ?? "",
+    orderNumber: (apiOrder.orderNumber as string) ?? "",
+    status: (apiOrder.status as OrderStatus) ?? "PENDING",
+    mode: (apiOrder.mode as Order["mode"]) ?? "TAKEAWAY",
+    items: items.map((item, idx) => ({
+      id: (item.id as string) ?? `oi-${idx}`,
+      productName: (item.productName as string) ?? "",
+      sizeName: (item.sizeName as string) ?? "",
+      sizePrice: (item.sizePrice as number) ?? 0,
+      quantity: (item.quantity as number) ?? 1,
+      supplements: (item.supplements as { name: string; price: number }[]) ?? [],
+      removedIngredients: (item.removedIngredients as string[]) ?? [],
+      specialInstructions: (item.specialInstructions as string) ?? undefined,
+      unitPrice: (item.unitPrice as number) ?? 0,
+      totalPrice: (item.totalPrice as number) ?? 0,
+    })),
+    subtotal: (apiOrder.subtotal as number) ?? 0,
+    deliveryFee: (apiOrder.deliveryFee as number) ?? 0,
+    discount: (apiOrder.discount as number) ?? 0,
+    total: (apiOrder.total as number) ?? 0,
+    paymentMethod: (apiOrder.paymentMethod as string) ?? "",
+    paymentStatus: (apiOrder.paymentStatus as string) ?? "pending",
+    createdAt: (apiOrder.createdAt as string) ?? new Date().toISOString(),
+  };
+}
+
+function OrdersSkeleton() {
+  return (
+    <div className="space-y-3">
+      {[1, 2, 3].map((i) => (
+        <div
+          key={i}
+          className="animate-pulse flex flex-col gap-3 rounded-lg border border-gray-100 p-4 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="h-4 w-36 rounded bg-gray-200" />
+              <div className="h-5 w-20 rounded-full bg-gray-200" />
+            </div>
+            <div className="h-3 w-48 rounded bg-gray-100" />
+          </div>
+          <div className="h-5 w-16 rounded bg-gray-200" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function ComptePage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuthStore();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push("/connexion");
     }
   }, [isAuthenticated, isLoading, router]);
+
+  useEffect(() => {
+    async function fetchOrders() {
+      try {
+        const res = await fetch("/api/orders");
+        if (!res.ok) throw new Error("Erreur de chargement");
+        const data = await res.json();
+        const mapped = Array.isArray(data)
+          ? data.map(mapApiOrderToOrder)
+          : [];
+        setOrders(mapped);
+      } catch {
+        setOrders([]);
+      } finally {
+        setOrdersLoading(false);
+      }
+    }
+
+    if (isAuthenticated) {
+      fetchOrders();
+    }
+  }, [isAuthenticated]);
 
   if (isLoading || !user) {
     return (
@@ -157,11 +129,9 @@ export default function ComptePage() {
     );
   }
 
-  const totalOrders = recentOrders.length;
-  const avgOrder =
-    totalOrders > 0
-      ? recentOrders.reduce((sum, o) => sum + o.total, 0) / totalOrders
-      : 0;
+  const totalOrders = orders.length;
+  const totalSpent = orders.reduce((sum, o) => sum + o.total, 0);
+  const recentOrders = orders.slice(0, 3);
 
   return (
     <div className="space-y-6">
@@ -202,8 +172,8 @@ export default function ComptePage() {
             <TrendingUp className="h-5 w-5 text-secondary" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-wood">{formatPrice(avgOrder)}</p>
-            <p className="text-sm text-gray-500">Panier moyen</p>
+            <p className="text-2xl font-bold text-wood">{formatPrice(totalSpent)}</p>
+            <p className="text-sm text-gray-500">Total d&eacute;pens&eacute;</p>
           </div>
         </div>
       </div>
@@ -223,38 +193,49 @@ export default function ComptePage() {
           </Link>
         </div>
 
-        <div className="space-y-3">
-          {recentOrders.map((order) => (
-            <div
-              key={order.id}
-              className="flex flex-col gap-3 rounded-lg border border-gray-100 p-4 transition-colors hover:bg-cream/50 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold text-wood">
-                    #{order.orderNumber}
-                  </span>
-                  <span
-                    className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColors[order.status]}`}
-                  >
-                    {statusLabels[order.status]}
-                  </span>
+        {ordersLoading ? (
+          <OrdersSkeleton />
+        ) : recentOrders.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <Package className="mb-3 h-10 w-10 text-gray-300" />
+            <p className="text-sm text-gray-500">
+              Aucune commande pour le moment
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {recentOrders.map((order) => (
+              <div
+                key={order.id}
+                className="flex flex-col gap-3 rounded-lg border border-gray-100 p-4 transition-colors hover:bg-cream/50 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold text-wood">
+                      #{order.orderNumber}
+                    </span>
+                    <span
+                      className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColors[order.status]}`}
+                    >
+                      {statusLabels[order.status]}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    {new Date(order.createdAt).toLocaleDateString("fr-FR", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}{" "}
+                    &mdash; {order.items.map((i) => i.productName).join(", ")}
+                  </p>
                 </div>
-                <p className="text-xs text-gray-500">
-                  {new Date(order.createdAt).toLocaleDateString("fr-FR", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}{" "}
-                  &mdash; {order.items.map((i) => i.productName).join(", ")}
+                <p className="text-sm font-bold text-primary">
+                  {formatPrice(order.total)}
                 </p>
               </div>
-              <p className="text-sm font-bold text-primary">
-                {formatPrice(order.total)}
-              </p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Quick links */}

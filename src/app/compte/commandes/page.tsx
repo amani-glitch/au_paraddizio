@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ChevronDown,
   ChevronUp,
@@ -31,134 +31,34 @@ const statusColors: Record<OrderStatus, string> = {
   CANCELLED: "bg-red-100 text-red-700",
 };
 
-const mockOrders: Order[] = [
-  {
-    id: "order-1",
-    orderNumber: "PAR-20260410-A7F2",
-    status: "DELIVERED",
-    mode: "DELIVERY",
-    items: [
-      {
-        id: "oi-1",
-        productName: "Margherita",
-        sizeName: "33 cm",
-        sizePrice: 10.5,
-        quantity: 2,
-        supplements: [{ name: "Extra mozzarella", price: 1.5 }],
-        removedIngredients: [],
-        unitPrice: 12,
-        totalPrice: 24,
-      },
-      {
-        id: "oi-2",
-        productName: "Tiramisu Maison",
-        sizeName: "Portion",
-        sizePrice: 5.5,
-        quantity: 1,
-        supplements: [],
-        removedIngredients: [],
-        unitPrice: 5.5,
-        totalPrice: 5.5,
-      },
-    ],
-    subtotal: 29.5,
-    deliveryFee: 0,
-    discount: 0,
-    total: 29.5,
-    paymentMethod: "card",
-    paymentStatus: "paid",
-    createdAt: "2026-04-10T19:30:00Z",
-  },
-  {
-    id: "order-2",
-    orderNumber: "PAR-20260407-K9D1",
-    status: "PREPARING",
-    mode: "TAKEAWAY",
-    items: [
-      {
-        id: "oi-3",
-        productName: "4 Fromages",
-        sizeName: "40 cm",
-        sizePrice: 16.5,
-        quantity: 1,
-        supplements: [],
-        removedIngredients: [],
-        unitPrice: 16.5,
-        totalPrice: 16.5,
-      },
-      {
-        id: "oi-4",
-        productName: "Coca-Cola",
-        sizeName: "33 cl",
-        sizePrice: 2.5,
-        quantity: 2,
-        supplements: [],
-        removedIngredients: [],
-        unitPrice: 2.5,
-        totalPrice: 5,
-      },
-    ],
-    subtotal: 21.5,
-    deliveryFee: 0,
-    discount: 0,
-    total: 21.5,
-    paymentMethod: "card",
-    paymentStatus: "paid",
-    createdAt: "2026-04-07T18:45:00Z",
-  },
-  {
-    id: "order-3",
-    orderNumber: "PAR-20260401-B3E5",
-    status: "DELIVERED",
-    mode: "DELIVERY",
-    items: [
-      {
-        id: "oi-5",
-        productName: "Corsica",
-        sizeName: "33 cm",
-        sizePrice: 14,
-        quantity: 1,
-        supplements: [{ name: "Extra coppa", price: 2.5 }],
-        removedIngredients: [],
-        unitPrice: 16.5,
-        totalPrice: 16.5,
-      },
-    ],
-    subtotal: 16.5,
-    deliveryFee: 3,
-    discount: 0,
-    total: 19.5,
-    paymentMethod: "cash",
-    paymentStatus: "paid",
-    createdAt: "2026-04-01T20:00:00Z",
-  },
-  {
-    id: "order-4",
-    orderNumber: "PAR-20260325-X1C8",
-    status: "CANCELLED",
-    mode: "DELIVERY",
-    items: [
-      {
-        id: "oi-6",
-        productName: "V\u00e9g\u00e9tarienne",
-        sizeName: "29 cm",
-        sizePrice: 10,
-        quantity: 1,
-        supplements: [],
-        removedIngredients: [],
-        unitPrice: 10,
-        totalPrice: 10,
-      },
-    ],
-    subtotal: 10,
-    deliveryFee: 3,
-    discount: 0,
-    total: 13,
-    paymentMethod: "card",
-    paymentStatus: "refunded",
-    createdAt: "2026-03-25T19:15:00Z",
-  },
-];
+function mapApiOrderToOrder(apiOrder: Record<string, unknown>): Order {
+  const items = (apiOrder.items as Record<string, unknown>[]) ?? [];
+  return {
+    id: (apiOrder.id as string) ?? "",
+    orderNumber: (apiOrder.orderNumber as string) ?? "",
+    status: (apiOrder.status as OrderStatus) ?? "PENDING",
+    mode: (apiOrder.mode as Order["mode"]) ?? "TAKEAWAY",
+    items: items.map((item, idx) => ({
+      id: (item.id as string) ?? `oi-${idx}`,
+      productName: (item.productName as string) ?? "",
+      sizeName: (item.sizeName as string) ?? "",
+      sizePrice: (item.sizePrice as number) ?? 0,
+      quantity: (item.quantity as number) ?? 1,
+      supplements: (item.supplements as { name: string; price: number }[]) ?? [],
+      removedIngredients: (item.removedIngredients as string[]) ?? [],
+      specialInstructions: (item.specialInstructions as string) ?? undefined,
+      unitPrice: (item.unitPrice as number) ?? 0,
+      totalPrice: (item.totalPrice as number) ?? 0,
+    })),
+    subtotal: (apiOrder.subtotal as number) ?? 0,
+    deliveryFee: (apiOrder.deliveryFee as number) ?? 0,
+    discount: (apiOrder.discount as number) ?? 0,
+    total: (apiOrder.total as number) ?? 0,
+    paymentMethod: (apiOrder.paymentMethod as string) ?? "",
+    paymentStatus: (apiOrder.paymentStatus as string) ?? "pending",
+    createdAt: (apiOrder.createdAt as string) ?? new Date().toISOString(),
+  };
+}
 
 function OrderCard({ order }: { order: Order }) {
   const [expanded, setExpanded] = useState(false);
@@ -298,7 +198,56 @@ function OrderCard({ order }: { order: Order }) {
   );
 }
 
+function OrdersSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[1, 2, 3].map((i) => (
+        <div
+          key={i}
+          className="animate-pulse overflow-hidden rounded-xl border border-gray-100 bg-white p-5 shadow-sm"
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <div className="h-4 w-36 rounded bg-gray-200" />
+                <div className="h-5 w-20 rounded-full bg-gray-200" />
+              </div>
+              <div className="h-3 w-48 rounded bg-gray-100" />
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="h-6 w-16 rounded bg-gray-200" />
+              <div className="h-8 w-16 rounded-lg bg-gray-200" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function CommandesPage() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchOrders() {
+      try {
+        const res = await fetch("/api/orders");
+        if (!res.ok) throw new Error("Erreur de chargement");
+        const data = await res.json();
+        const mapped = Array.isArray(data)
+          ? data.map(mapApiOrderToOrder)
+          : [];
+        setOrders(mapped);
+      } catch {
+        setOrders([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchOrders();
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -308,7 +257,9 @@ export default function CommandesPage() {
         </h1>
       </div>
 
-      {mockOrders.length === 0 ? (
+      {loading ? (
+        <OrdersSkeleton />
+      ) : orders.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl bg-white py-16 text-center shadow-sm">
           <Package className="mb-4 h-12 w-12 text-gray-300" />
           <p className="text-lg font-medium text-gray-500">
@@ -320,7 +271,7 @@ export default function CommandesPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {mockOrders.map((order) => (
+          {orders.map((order) => (
             <OrderCard key={order.id} order={order} />
           ))}
         </div>

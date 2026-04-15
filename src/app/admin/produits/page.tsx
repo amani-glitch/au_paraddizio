@@ -1,25 +1,103 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
-import { Plus, Search, Pencil, Trash2, Package } from "lucide-react";
-import { products, categories } from "@/lib/data";
+import { Plus, Search, Pencil, Trash2, Package, Loader2 } from "lucide-react";
 import { formatPrice, cn } from "@/lib/utils";
+import toast from "react-hot-toast";
+
+// ---- Types ----
+
+interface ProductSize {
+  id: string;
+  name: string;
+  price: number;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  categoryId: string;
+  basePrice: number;
+  sizes: ProductSize[];
+  isActive: boolean;
+  isNew: boolean;
+  isBestSeller: boolean;
+  isPromo: boolean;
+  isPizzaOfMonth: boolean;
+  [key: string]: unknown;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+}
 
 const categoryEmojis: Record<string, string> = {
-  "cat-pizzas": "🍕",
-  "cat-entrees": "🥗",
-  "cat-desserts": "🍰",
-  "cat-boissons": "🥤",
-  "cat-menus": "📦",
-  "cat-extras": "➕",
+  "cat-pizzas": "\uD83C\uDF55",
+  "cat-entrees": "\uD83E\uDD57",
+  "cat-desserts": "\uD83C\uDF70",
+  "cat-boissons": "\uD83E\uDD64",
+  "cat-menus": "\uD83D\uDCE6",
+  "cat-extras": "\u2795",
 };
 
+// ---- Skeleton ----
+
+function Skeleton({ className }: { className?: string }) {
+  return (
+    <div className={cn("animate-pulse rounded-lg bg-gray-200", className)} />
+  );
+}
+
 export default function AdminProductsPage() {
+  const [localProducts, setLocalProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [localProducts, setLocalProducts] = useState(products.map(p => ({ ...p, isActive: p.isActive })));
+
+  // Fetch products and categories in parallel
+  const fetchData = useCallback(async () => {
+    try {
+      const [productsRes, categoriesRes] = await Promise.all([
+        fetch("/api/products"),
+        fetch("/api/categories"),
+      ]);
+
+      if (!productsRes.ok) throw new Error("Erreur lors du chargement des produits");
+      if (!categoriesRes.ok) throw new Error("Erreur lors du chargement des categories");
+
+      const productsData = await productsRes.json();
+      const categoriesData = await categoriesRes.json();
+
+      setLocalProducts(
+        (Array.isArray(productsData) ? productsData : []).map((p: Product) => ({
+          ...p,
+          isActive: p.isActive ?? true,
+          isNew: p.isNew ?? false,
+          isBestSeller: p.isBestSeller ?? false,
+          isPromo: p.isPromo ?? false,
+          isPizzaOfMonth: p.isPizzaOfMonth ?? false,
+          sizes: p.sizes ?? [],
+        }))
+      );
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Impossible de charger les donnees"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const filtered = useMemo(() => {
     return localProducts.filter((p) => {
@@ -53,6 +131,29 @@ export default function AdminProductsPage() {
   };
 
   const getCategoryName = (id: string) => categories.find(c => c.id === id)?.name ?? "";
+
+  // ---- Loading ----
+  if (loading) {
+    return (
+      <div>
+        <div className="mb-6 flex items-center justify-between">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-10 w-40" />
+        </div>
+        <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 w-full" />
+          ))}
+        </div>
+        <Skeleton className="h-12 w-full mb-4" />
+        <div className="rounded-xl bg-white shadow-sm p-4 space-y-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-14 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -103,7 +204,7 @@ export default function AdminProductsPage() {
           onChange={(e) => setCategoryFilter(e.target.value)}
           className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-primary focus:outline-none"
         >
-          <option value="all">Toutes catégories</option>
+          <option value="all">Toutes categories</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
@@ -127,7 +228,7 @@ export default function AdminProductsPage() {
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                 <th className="px-4 py-3">Produit</th>
-                <th className="px-4 py-3">Catégorie</th>
+                <th className="px-4 py-3">Categorie</th>
                 <th className="px-4 py-3">Prix</th>
                 <th className="px-4 py-3">Tailles</th>
                 <th className="px-4 py-3">Statut</th>
@@ -140,7 +241,7 @@ export default function AdminProductsPage() {
                 <tr key={p.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <span className="text-xl">{categoryEmojis[p.categoryId] ?? "🍽️"}</span>
+                      <span className="text-xl">{categoryEmojis[p.categoryId] ?? "\uD83C\uDF7D\uFE0F"}</span>
                       <div>
                         <p className="font-medium text-gray-900">{p.name}</p>
                         <p className="max-w-[200px] truncate text-xs text-gray-500">{p.description}</p>
@@ -151,7 +252,7 @@ export default function AdminProductsPage() {
                   <td className="px-4 py-3 text-sm font-medium">{formatPrice(p.basePrice)}</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
-                      {p.sizes.map((s) => (
+                      {(p.sizes ?? []).map((s) => (
                         <span key={s.id} className="rounded bg-gray-100 px-1.5 py-0.5 text-xs">{s.name}</span>
                       ))}
                     </div>
@@ -215,7 +316,7 @@ export default function AdminProductsPage() {
             <div key={p.id} className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">{categoryEmojis[p.categoryId] ?? "🍽️"}</span>
+                  <span className="text-2xl">{categoryEmojis[p.categoryId] ?? "\uD83C\uDF7D\uFE0F"}</span>
                   <div>
                     <p className="font-semibold text-gray-900">{p.name}</p>
                     <p className="text-xs text-gray-500">{getCategoryName(p.categoryId)}</p>
@@ -249,7 +350,7 @@ export default function AdminProductsPage() {
         {filtered.length === 0 && (
           <div className="py-12 text-center">
             <Package className="mx-auto mb-3 h-12 w-12 text-gray-300" />
-            <p className="text-gray-500">Aucun produit trouvé</p>
+            <p className="text-gray-500">Aucun produit trouve</p>
           </div>
         )}
       </div>

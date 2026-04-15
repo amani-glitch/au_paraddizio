@@ -33,9 +33,14 @@ export default function CompteLayout({ children }: { children: React.ReactNode }
     }
   }, [isAuthenticated, isLoading, router]);
 
-  function handleLogout() {
+  async function handleLogout() {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // proceed with local logout even if the API call fails
+    }
     logout();
-    router.push("/connexion");
+    router.push("/");
   }
 
   if (isLoading) {

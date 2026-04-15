@@ -1,63 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { products as mockProducts, categories as mockCategories } from "@/lib/data";
+import { getProductBySlug } from "@/lib/db/products";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const { slug } = await params;
-
-    // Try Prisma first
-    try {
-      const product = await prisma.product.findUnique({
-        where: { slug },
-        include: { sizes: true, supplements: true, category: true },
-      });
-
-      if (!product) {
-        return NextResponse.json(
-          { error: "Product not found" },
-          { status: 404 }
-        );
-      }
-
-      if (!product.isActive) {
-        return NextResponse.json(
-          { error: "Product not found" },
-          { status: 404 }
-        );
-      }
-
-      return NextResponse.json(product);
-    } catch {
-      // Database unavailable -- fall through to mock data
-    }
-
-    // Mock data fallback
-    const product = mockProducts.find(
-      (p) => p.slug === slug && p.isActive
-    );
-
+    const product = await getProductBySlug(slug);
     if (!product) {
-      return NextResponse.json(
-        { error: "Product not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
-
-    const withCategory = {
-      ...product,
-      category: mockCategories.find((c) => c.id === product.categoryId),
-    };
-
-    return NextResponse.json(withCategory);
+    return NextResponse.json(product);
   } catch (error) {
     console.error("GET /api/products/[slug] error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

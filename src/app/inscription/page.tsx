@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, User, Phone, UserPlus } from "lucide-react";
+import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
 
@@ -84,19 +85,34 @@ export default function InscriptionPage() {
     if (!validate()) return;
 
     setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 600));
+    setErrors({});
 
-    setUser({
-      id: "user-1",
-      email,
-      name: name.trim(),
-      phone: phone || undefined,
-      role: "CUSTOMER",
-      loyaltyPoints: 0,
-      addresses: [],
-    });
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), email, phone: phone || undefined, password }),
+      });
 
-    router.push("/compte");
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 409) {
+          setErrors({ email: data.error || "Cet email est déjà utilisé" });
+        } else {
+          setErrors({ name: data.error || "Une erreur est survenue lors de l'inscription" });
+        }
+        return;
+      }
+
+      setUser(data.user);
+      toast.success("Compte créé avec succès !");
+      router.push("/compte");
+    } catch {
+      setErrors({ name: "Erreur de connexion au serveur. Veuillez réessayer." });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -304,7 +320,7 @@ export default function InscriptionPage() {
               ) : (
                 <UserPlus className="h-4 w-4" />
               )}
-              Cr&eacute;er mon compte
+              {isSubmitting ? "Création..." : "Créer mon compte"}
             </button>
           </form>
 

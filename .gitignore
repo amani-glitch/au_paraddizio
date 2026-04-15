@@ -32,6 +32,10 @@ yarn-error.log*
 .env
 .env*.local
 
+# service account keys (NEVER commit)
+/config/service-account.json
+/config/*.json
+
 # vercel
 .vercel
 

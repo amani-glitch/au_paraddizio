@@ -1,31 +1,12 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { categories as mockCategories } from "@/lib/data";
+import { listCategories } from "@/lib/db/products";
 
 export async function GET() {
   try {
-    // Try Prisma first
-    try {
-      const dbCategories = await prisma.category.findMany({
-        where: { isActive: true },
-        orderBy: { order: "asc" },
-        include: { children: true },
-      });
-
-      return NextResponse.json(dbCategories);
-    } catch {
-      // Database unavailable -- fall through to mock data
-    }
-
-    // Mock data fallback
-    const sorted = [...mockCategories].sort((a, b) => a.order - b.order);
-
-    return NextResponse.json(sorted);
+    const categories = await listCategories();
+    return NextResponse.json(categories);
   } catch (error) {
     console.error("GET /api/categories error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json([], { status: 500 });
   }
 }

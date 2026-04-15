@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   TrendingUp,
@@ -11,11 +11,10 @@ import {
   Bell,
   ArrowRight,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import { formatPrice, cn } from "@/lib/utils";
 import {
-  mockKPIs,
-  mockAdminOrders,
   statusLabels,
   statusColors,
   modeLabels,
@@ -23,59 +22,58 @@ import {
   getNextStatus,
   getNextStatusLabel,
   timeAgo,
-  type AdminOrder,
 } from "@/lib/admin-data";
+import toast from "react-hot-toast";
 
-// ---- KPI Cards ----
+// ---- Types ----
 
-const kpiCards = [
-  {
-    label: "CA du jour",
-    value: formatPrice(mockKPIs.dailyRevenue),
-    change: `+${mockKPIs.dailyRevenueChange}% vs hier`,
-    positive: true,
-    icon: TrendingUp,
-    iconBg: "bg-emerald-100",
-    iconColor: "text-emerald-600",
-  },
-  {
-    label: "Commandes",
-    value: String(mockKPIs.dailyOrders),
-    change: `+${mockKPIs.dailyOrdersChange} vs hier`,
-    positive: true,
-    icon: ShoppingBag,
-    iconBg: "bg-red-100",
-    iconColor: "text-primary",
-  },
-  {
-    label: "Panier moyen",
-    value: formatPrice(mockKPIs.avgBasket),
-    change: `+${mockKPIs.avgBasketChange.toFixed(2)} \u20AC`,
-    positive: true,
-    icon: Target,
-    iconBg: "bg-amber-100",
-    iconColor: "text-accent",
-  },
-  {
-    label: "Nouveaux clients",
-    value: String(mockKPIs.newClients),
-    change: "cette semaine",
-    positive: null,
-    icon: UserPlus,
-    iconBg: "bg-green-100",
-    iconColor: "text-secondary",
-  },
-];
+interface StatsData {
+  todayRevenue: number;
+  todayOrders: number;
+  avgBasket: number;
+  totalOrders: number;
+  totalRevenue: number;
+  byMode: Record<string, number>;
+  byStatus: Record<string, number>;
+  weeklyRevenue: number[];
+  weeklyLabels: string[];
+}
 
-// ---- Weekly chart data ----
+interface TopProduct {
+  name: string;
+  sold: number;
+  revenue: number;
+}
 
-const maxWeekly = Math.max(...mockKPIs.weeklyRevenue);
+interface RecentOrderItem {
+  name: string;
+  size?: string;
+  qty: number;
+  price: number;
+}
 
-// ---- Alerts ----
+interface RecentOrder {
+  id: string;
+  orderNumber: string;
+  status: string;
+  mode: string;
+  total: number;
+  customerName: string;
+  items: RecentOrderItem[];
+  createdAt: string;
+}
+
+interface DashboardData {
+  stats: StatsData;
+  topProducts: TopProduct[];
+  recentOrders: RecentOrder[];
+}
+
+// ---- Alerts (static) ----
 
 const alerts = [
   {
-    text: "3 produits bientôt en rupture",
+    text: "3 produits bientot en rupture",
     icon: AlertTriangle,
     color: "text-yellow-600",
     bg: "bg-yellow-50",
@@ -89,7 +87,7 @@ const alerts = [
     border: "border-blue-200",
   },
   {
-    text: "Pic prévu entre 19h-20h",
+    text: "Pic prevu entre 19h-20h",
     icon: TrendingUp,
     color: "text-orange-600",
     bg: "bg-orange-50",
@@ -97,23 +95,189 @@ const alerts = [
   },
 ];
 
+// ---- Skeleton component ----
+
+function Skeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn("animate-pulse rounded-lg bg-gray-200", className)}
+    />
+  );
+}
+
 export default function AdminDashboard() {
-  const [orders, setOrders] = useState<AdminOrder[]>([...mockAdminOrders]);
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [orders, setOrders] = useState<RecentOrder[]>([]);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/stats");
+      if (!res.ok) throw new Error("Erreur lors du chargement des statistiques");
+      const json: DashboardData = await res.json();
+      setData(json);
+      setOrders(json.recentOrders ?? []);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Impossible de charger le tableau de bord"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const activeOrders = orders.filter(
     (o) => o.status !== "DELIVERED" && o.status !== "CANCELLED"
   );
 
-  const handleAdvanceStatus = (orderId: string) => {
+  const handleAdvanceStatus = async (order: RecentOrder) => {
+    const next = getNextStatus(order.status);
+    if (!next) return;
+
+    // Optimistic update
     setOrders((prev) =>
-      prev.map((o) => {
-        if (o.id !== orderId) return o;
-        const next = getNextStatus(o.status);
-        if (!next) return o;
-        return { ...o, status: next as AdminOrder["status"] };
-      })
+      prev.map((o) =>
+        o.id === order.id ? { ...o, status: next } : o
+      )
     );
+
+    try {
+      const res = await fetch(`/api/orders/${order.orderNumber}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: next }),
+      });
+      if (!res.ok) throw new Error("Erreur lors de la mise a jour du statut");
+    } catch (err) {
+      // Revert on failure
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === order.id ? { ...o, status: order.status } : o
+        )
+      );
+      toast.error(
+        err instanceof Error ? err.message : "Impossible de mettre a jour le statut"
+      );
+    }
   };
+
+  // ---- Loading skeleton ----
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-xl p-6 shadow-sm space-y-3">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-3 w-28" />
+            </div>
+          ))}
+        </div>
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div className="bg-white rounded-xl p-6 shadow-sm">
+            <Skeleton className="h-6 w-48 mb-6" />
+            <Skeleton className="h-48 w-full" />
+          </div>
+          <div className="bg-white rounded-xl p-6 shadow-sm">
+            <Skeleton className="h-6 w-48 mb-6" />
+            <div className="space-y-5">
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-full" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <Skeleton className="h-6 w-48 mb-4" />
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full mb-2" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <p className="text-gray-500">Impossible de charger les donnees du tableau de bord.</p>
+      </div>
+    );
+  }
+
+  const { stats, topProducts } = data;
+
+  // ---- KPI Cards ----
+  const kpiCards = [
+    {
+      label: "CA du jour",
+      value: formatPrice(stats.todayRevenue),
+      change: `${stats.totalOrders} commandes au total`,
+      positive: true,
+      icon: TrendingUp,
+      iconBg: "bg-emerald-100",
+      iconColor: "text-emerald-600",
+    },
+    {
+      label: "Commandes",
+      value: String(stats.todayOrders),
+      change: `${stats.totalOrders} au total`,
+      positive: true,
+      icon: ShoppingBag,
+      iconBg: "bg-red-100",
+      iconColor: "text-primary",
+    },
+    {
+      label: "Panier moyen",
+      value: formatPrice(stats.avgBasket),
+      change: `CA total : ${formatPrice(stats.totalRevenue)}`,
+      positive: true,
+      icon: Target,
+      iconBg: "bg-amber-100",
+      iconColor: "text-accent",
+    },
+    {
+      label: "CA total",
+      value: formatPrice(stats.totalRevenue),
+      change: "toutes periodes",
+      positive: null,
+      icon: UserPlus,
+      iconBg: "bg-green-100",
+      iconColor: "text-secondary",
+    },
+  ];
+
+  // ---- Weekly chart ----
+  const weeklyRevenue = stats.weeklyRevenue ?? [];
+  const weeklyLabels = stats.weeklyLabels ?? [];
+  const maxWeekly = Math.max(...weeklyRevenue, 1);
+
+  // ---- Order modes ----
+  const byMode = stats.byMode ?? {};
+  const totalByMode =
+    Object.values(byMode).reduce((s, v) => s + v, 0) || 1;
+  const modeBreakdown = [
+    {
+      label: "Livraison",
+      pct: Math.round(((byMode.DELIVERY ?? 0) / totalByMode) * 100),
+      color: "bg-blue-500",
+    },
+    {
+      label: "A emporter",
+      pct: Math.round(((byMode.TAKEAWAY ?? 0) / totalByMode) * 100),
+      color: "bg-orange-500",
+    },
+    {
+      label: "Sur place",
+      pct: Math.round(((byMode.DINE_IN ?? 0) / totalByMode) * 100),
+      color: "bg-green-500",
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -166,55 +330,43 @@ export default function AdminDashboard() {
           <h2 className="text-lg font-semibold text-gray-900 mb-6">
             Ventes de la semaine
           </h2>
-          <div className="flex items-end justify-between gap-3 h-48">
-            {mockKPIs.weeklyRevenue.map((value, i) => {
-              const heightPct = (value / maxWeekly) * 100;
-              return (
-                <div
-                  key={mockKPIs.weekDays[i]}
-                  className="flex flex-col items-center flex-1 gap-1"
-                >
-                  <span className="text-xs font-medium text-gray-600">
-                    {value} &euro;
-                  </span>
-                  <div className="w-full relative" style={{ height: "160px" }}>
-                    <div
-                      className="absolute bottom-0 w-full bg-primary rounded-t transition-all duration-500"
-                      style={{ height: `${heightPct}%` }}
-                    />
+          {weeklyRevenue.length > 0 ? (
+            <div className="flex items-end justify-between gap-3 h-48">
+              {weeklyRevenue.map((value, i) => {
+                const heightPct = (value / maxWeekly) * 100;
+                return (
+                  <div
+                    key={weeklyLabels[i] ?? i}
+                    className="flex flex-col items-center flex-1 gap-1"
+                  >
+                    <span className="text-xs font-medium text-gray-600">
+                      {value} &euro;
+                    </span>
+                    <div className="w-full relative" style={{ height: "160px" }}>
+                      <div
+                        className="absolute bottom-0 w-full bg-primary rounded-t transition-all duration-500"
+                        style={{ height: `${heightPct}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-gray-500 mt-1">
+                      {weeklyLabels[i] ?? ""}
+                    </span>
                   </div>
-                  <span className="text-xs text-gray-500 mt-1">
-                    {mockKPIs.weekDays[i]}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-gray-400 text-center py-12">Aucune donnee disponible</p>
+          )}
         </div>
 
         {/* Order Modes Breakdown */}
         <div className="bg-white rounded-xl p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">
-            Répartition des commandes
+            Repartition des commandes
           </h2>
           <div className="space-y-5">
-            {[
-              {
-                label: "Livraison",
-                pct: mockKPIs.orderModes.delivery,
-                color: "bg-blue-500",
-              },
-              {
-                label: "À emporter",
-                pct: mockKPIs.orderModes.takeaway,
-                color: "bg-orange-500",
-              },
-              {
-                label: "Sur place",
-                pct: mockKPIs.orderModes.dineIn,
-                color: "bg-green-500",
-              },
-            ].map((mode) => (
+            {modeBreakdown.map((mode) => (
               <div key={mode.label} className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-700 font-medium">
@@ -298,10 +450,10 @@ export default function AdminDashboard() {
                   <span
                     className={cn(
                       "text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap",
-                      modeColors[order.mode]
+                      modeColors[order.mode] ?? "bg-gray-100 text-gray-800"
                     )}
                   >
-                    {modeLabels[order.mode]}
+                    {modeLabels[order.mode] ?? order.mode}
                   </span>
                 </div>
 
@@ -313,14 +465,14 @@ export default function AdminDashboard() {
                   <span
                     className={cn(
                       "text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap",
-                      statusColors[order.status]
+                      statusColors[order.status] ?? "bg-gray-100 text-gray-800"
                     )}
                   >
-                    {statusLabels[order.status]}
+                    {statusLabels[order.status] ?? order.status}
                   </span>
                   {nextLabel && (
                     <button
-                      onClick={() => handleAdvanceStatus(order.id)}
+                      onClick={() => handleAdvanceStatus(order)}
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-primary-dark transition-colors whitespace-nowrap"
                     >
                       {nextLabel}
@@ -343,49 +495,55 @@ export default function AdminDashboard() {
               Produits populaires
             </h2>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="text-left text-xs text-gray-500 uppercase tracking-wider">
-                  <th className="px-6 py-3 font-medium">#</th>
-                  <th className="px-6 py-3 font-medium">Produit</th>
-                  <th className="px-6 py-3 font-medium text-right">Vendus</th>
-                  <th className="px-6 py-3 font-medium text-right">CA</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {mockKPIs.popularProducts.map((product, i) => (
-                  <tr key={product.name} className="hover:bg-gray-50">
-                    <td className="px-6 py-3">
-                      <span
-                        className={cn(
-                          "inline-flex items-center justify-center h-6 w-6 rounded-full text-xs font-bold",
-                          i === 0
-                            ? "bg-accent text-white"
-                            : i === 1
-                            ? "bg-gray-200 text-gray-700"
-                            : i === 2
-                            ? "bg-amber-100 text-amber-700"
-                            : "bg-gray-100 text-gray-500"
-                        )}
-                      >
-                        {i + 1}
-                      </span>
-                    </td>
-                    <td className="px-6 py-3 text-sm font-medium text-gray-900">
-                      {product.name}
-                    </td>
-                    <td className="px-6 py-3 text-sm text-gray-600 text-right">
-                      {product.sold}
-                    </td>
-                    <td className="px-6 py-3 text-sm font-semibold text-gray-900 text-right">
-                      {formatPrice(product.revenue)}
-                    </td>
+          {topProducts.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left text-xs text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 font-medium">#</th>
+                    <th className="px-6 py-3 font-medium">Produit</th>
+                    <th className="px-6 py-3 font-medium text-right">Vendus</th>
+                    <th className="px-6 py-3 font-medium text-right">CA</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {topProducts.map((product, i) => (
+                    <tr key={product.name} className="hover:bg-gray-50">
+                      <td className="px-6 py-3">
+                        <span
+                          className={cn(
+                            "inline-flex items-center justify-center h-6 w-6 rounded-full text-xs font-bold",
+                            i === 0
+                              ? "bg-accent text-white"
+                              : i === 1
+                              ? "bg-gray-200 text-gray-700"
+                              : i === 2
+                              ? "bg-amber-100 text-amber-700"
+                              : "bg-gray-100 text-gray-500"
+                          )}
+                        >
+                          {i + 1}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3 text-sm font-medium text-gray-900">
+                        {product.name}
+                      </td>
+                      <td className="px-6 py-3 text-sm text-gray-600 text-right">
+                        {product.sold}
+                      </td>
+                      <td className="px-6 py-3 text-sm font-semibold text-gray-900 text-right">
+                        {formatPrice(product.revenue)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="px-6 py-8 text-center text-gray-400">
+              Aucun produit vendu
+            </p>
+          )}
         </div>
 
         {/* Alerts */}

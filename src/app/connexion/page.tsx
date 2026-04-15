@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, LogIn } from "lucide-react";
+import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +15,7 @@ export default function ConnexionPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function validate(): boolean {
@@ -38,30 +39,36 @@ export default function ConnexionPage() {
     if (!validate()) return;
 
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 600));
+    setErrors({});
 
-    setUser({
-      id: "user-1",
-      email,
-      name: "Jean Dupont",
-      phone: "06 12 34 56 78",
-      role: "CUSTOMER",
-      loyaltyPoints: 142,
-      addresses: [
-        {
-          id: "addr-1",
-          label: "Maison",
-          street: "12 Rue des Oliviers",
-          city: "Entraigues-sur-la-Sorgue",
-          postalCode: "84320",
-          instructions: "Interphone 3B",
-          isDefault: true,
-        },
-      ],
-    });
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    router.push("/compte");
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErrors({ general: data.error || "Identifiants incorrects" });
+        return;
+      }
+
+      setUser(data.user);
+      toast.success("Connexion réussie !");
+
+      const role = data.user?.role;
+      if (role === "ADMIN" || role === "MANAGER") {
+        router.push("/admin");
+      } else {
+        router.push("/compte");
+      }
+    } catch {
+      setErrors({ general: "Erreur de connexion au serveur. Veuillez réessayer." });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -84,6 +91,13 @@ export default function ConnexionPage() {
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+            {/* General error */}
+            {errors.general && (
+              <div className="rounded-lg bg-red-50 p-3 text-center text-sm text-red-600">
+                {errors.general}
+              </div>
+            )}
+
             {/* Email */}
             <div>
               <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-gray-700">
@@ -164,7 +178,7 @@ export default function ConnexionPage() {
               ) : (
                 <LogIn className="h-4 w-4" />
               )}
-              Se connecter
+              {isSubmitting ? "Connexion..." : "Se connecter"}
             </button>
           </form>
 

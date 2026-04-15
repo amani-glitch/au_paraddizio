@@ -1,10 +1,12 @@
 "use client";
 
 import { Toaster } from "react-hot-toast";
+import AuthInit from "./AuthInit";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <AuthInit />
       {children}
       <Toaster
         position="top-right"

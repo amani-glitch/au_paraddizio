@@ -1,61 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateOrderNumber } from "@/lib/utils";
-import type { OrderMode, OrderStatus } from "@/types";
+import { createOrder, listOrders } from "@/lib/db/orders";
+import { getSession } from "@/lib/auth";
+import { addLoyaltyPoints } from "@/lib/db/users";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-
     const {
       items,
       mode,
-      address,
+      deliveryAddress,
       customerInfo,
       paymentMethod,
       promoCode,
-      scheduledAt,
       notes,
     } = body;
 
-    // Validate required fields
     if (!items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json(
-        { error: "At least one item is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Au moins un article requis" }, { status: 400 });
     }
 
     if (!mode || !["DELIVERY", "TAKEAWAY", "DINE_IN"].includes(mode)) {
-      return NextResponse.json(
-        { error: "Invalid order mode. Must be DELIVERY, TAKEAWAY, or DINE_IN" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Mode de commande invalide" }, { status: 400 });
     }
 
-    if (mode === "DELIVERY" && !address) {
-      return NextResponse.json(
-        { error: "Delivery address is required for delivery orders" },
-        { status: 400 }
-      );
+    if (!customerInfo?.name || !customerInfo?.phone) {
+      return NextResponse.json({ error: "Nom et téléphone requis" }, { status: 400 });
     }
 
-    if (!customerInfo || !customerInfo.name || !customerInfo.phone) {
-      return NextResponse.json(
-        { error: "Customer name and phone are required" },
-        { status: 400 }
-      );
-    }
+    // Get optional session
+    const session = await getSession();
 
-    if (!paymentMethod) {
-      return NextResponse.json(
-        { error: "Payment method is required" },
-        { status: 400 }
-      );
-    }
-
-    const orderNumber = generateOrderNumber();
-
-    // Calculate totals
     const subtotal = items.reduce(
       (sum: number, item: { totalPrice?: number; unitPrice?: number; quantity?: number }) =>
         sum + (item.totalPrice ?? (item.unitPrice ?? 0) * (item.quantity ?? 1)),
@@ -63,125 +38,90 @@ export async function POST(request: NextRequest) {
     );
     const deliveryFee = mode === "DELIVERY" ? 3 : 0;
     let discount = 0;
-
     if (promoCode) {
-      const code = promoCode.toUpperCase();
-      if (code === "BIENVENUE") {
-        discount = subtotal * 0.1;
-      } else if (code === "PIZZA10") {
-        discount = Math.min(10, subtotal);
-      } else if (code === "LIVRAISON") {
-        discount = deliveryFee;
-      }
+      const code = String(promoCode).toUpperCase();
+      if (code === "BIENVENUE") discount = subtotal * 0.1;
+      else if (code === "PIZZA10") discount = Math.min(10, subtotal);
+      else if (code === "LIVRAISON") discount = deliveryFee;
     }
+    const total = Math.round((subtotal + deliveryFee - discount) * 100) / 100;
 
-    const total = subtotal + deliveryFee - discount;
-
-    // Mock response (Prisma DB integration pending)
-    const mockOrder = {
-      id: `order-${Date.now()}`,
-      orderNumber,
-      status: "PENDING" as OrderStatus,
-      mode: mode as OrderMode,
-      items,
+    const order = await createOrder({
+      userId: session?.userId ?? null,
+      customerName: customerInfo.name,
+      customerPhone: customerInfo.phone,
+      customerEmail: customerInfo.email ?? null,
+      mode,
       subtotal: Math.round(subtotal * 100) / 100,
       deliveryFee,
       discount: Math.round(discount * 100) / 100,
-      total: Math.round(total * 100) / 100,
-      address: address ?? null,
-      scheduledAt: scheduledAt ?? null,
-      estimatedReadyAt: null,
+      total,
+      promoCode: promoCode ?? null,
+      deliveryAddress: deliveryAddress
+        ? typeof deliveryAddress === "string"
+          ? deliveryAddress
+          : JSON.stringify(deliveryAddress)
+        : null,
       paymentMethod,
-      paymentStatus: "PENDING",
       notes: notes ?? null,
-      customerInfo,
-      createdAt: new Date().toISOString(),
-    };
+      items: items.map((it: {
+        productId?: string;
+        product?: { id: string; name: string };
+        productName?: string;
+        size?: { name?: string; price?: number };
+        sizeName?: string;
+        sizePrice?: number;
+        quantity: number;
+        supplements?: { name: string; price: number }[];
+        removedIngredients?: string[];
+        specialInstructions?: string;
+        unitPrice: number;
+        totalPrice: number;
+      }) => ({
+        productId: it.productId ?? it.product?.id ?? "",
+        productName: it.productName ?? it.product?.name ?? "",
+        sizeName: it.sizeName ?? it.size?.name,
+        sizePrice: it.sizePrice ?? it.size?.price,
+        quantity: it.quantity,
+        supplements: it.supplements ?? [],
+        removedIngredients: it.removedIngredients ?? [],
+        specialInstructions: it.specialInstructions ?? "",
+        unitPrice: it.unitPrice,
+        totalPrice: it.totalPrice,
+      })),
+    });
 
-    return NextResponse.json(mockOrder, { status: 201 });
+    // Award loyalty points for authenticated users
+    if (session?.userId) {
+      const pointsEarned = Math.floor(total);
+      await addLoyaltyPoints(session.userId, pointsEarned);
+    }
+
+    return NextResponse.json(order, { status: 201 });
   } catch (error) {
     console.error("POST /api/orders error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
+    const userId = searchParams.get("userId") ?? undefined;
+    const session = await getSession();
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: "userId query parameter is required" },
-        { status: 400 }
-      );
+    // If not admin, only show own orders
+    const isAdminUser = session?.role === "ADMIN" || session?.role === "MANAGER";
+    if (!isAdminUser && !userId && !session) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    // Mock data (Prisma DB integration pending)
-    const sampleOrders = [
-      {
-        id: "order-mock-1",
-        orderNumber: "PAR-20260414-A1B2",
-        status: "DELIVERED" as OrderStatus,
-        mode: "DELIVERY" as OrderMode,
-        items: [
-          {
-            id: "item-1",
-            productName: "Margherita",
-            sizeName: "33 cm",
-            sizePrice: 10.5,
-            quantity: 2,
-            supplements: [],
-            removedIngredients: [],
-            unitPrice: 10.5,
-            totalPrice: 21,
-          },
-        ],
-        subtotal: 21,
-        deliveryFee: 3,
-        discount: 0,
-        total: 24,
-        paymentMethod: "card",
-        paymentStatus: "PAID",
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-      },
-      {
-        id: "order-mock-2",
-        orderNumber: "PAR-20260413-C3D4",
-        status: "PENDING" as OrderStatus,
-        mode: "TAKEAWAY" as OrderMode,
-        items: [
-          {
-            id: "item-2",
-            productName: "4 Fromages",
-            sizeName: "29 cm",
-            sizePrice: 10.5,
-            quantity: 1,
-            supplements: [{ name: "Extra mozzarella", price: 1.5 }],
-            removedIngredients: [],
-            unitPrice: 12,
-            totalPrice: 12,
-          },
-        ],
-        subtotal: 12,
-        deliveryFee: 0,
-        discount: 0,
-        total: 12,
-        paymentMethod: "cash",
-        paymentStatus: "PENDING",
-        createdAt: new Date().toISOString(),
-      },
-    ];
-
-    return NextResponse.json(sampleOrders);
+    const orders = await listOrders({
+      userId: isAdminUser ? userId : session?.userId,
+    });
+    return NextResponse.json(orders);
   } catch (error) {
     console.error("GET /api/orders error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json([], { status: 500 });
   }
 }

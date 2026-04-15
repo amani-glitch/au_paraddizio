@@ -29,9 +29,10 @@ import {
   AlertCircle,
   Package,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import { useCartStore } from "@/stores/cart-store";
 import { useAuthStore } from "@/stores/auth-store";
-import { formatPrice, cn, generateOrderNumber } from "@/lib/utils";
+import { formatPrice, cn } from "@/lib/utils";
 import { storeInfo, deliveryZones } from "@/lib/data";
 import type { OrderMode } from "@/types";
 
@@ -429,15 +430,93 @@ export default function CheckoutPage() {
 
     setIsProcessing(true);
 
-    // Simulate payment processing
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      // Build customerInfo from auth user or guest/register form
+      let customerInfo: { name: string; phone: string; email: string };
+      if (auth.isAuthenticated && auth.user) {
+        customerInfo = {
+          name: auth.user.name,
+          phone: auth.user.phone ?? guestInfo.phone,
+          email: auth.user.email,
+        };
+      } else if (authTab === "guest") {
+        customerInfo = {
+          name: guestInfo.name,
+          phone: guestInfo.phone,
+          email: guestInfo.email,
+        };
+      } else if (authTab === "register") {
+        customerInfo = {
+          name: registerForm.name,
+          phone: registerForm.phone,
+          email: registerForm.email,
+        };
+      } else {
+        customerInfo = {
+          name: loginForm.email.split("@")[0],
+          phone: guestInfo.phone || "",
+          email: loginForm.email,
+        };
+      }
 
-    const newOrderNumber = generateOrderNumber();
-    setOrderNumber(newOrderNumber);
-    setOrderPlacedAt(new Date());
-    setIsProcessing(false);
-    goNext();
-    cart.clearCart();
+      // Transform cart items to API format
+      const apiItems = cart.items.map((item) => ({
+        productId: item.product.id,
+        productName: item.product.name,
+        sizeName: item.size.name,
+        sizePrice: item.size.price,
+        quantity: item.quantity,
+        supplements: item.supplements.map((s) => ({ name: s.name, price: s.price })),
+        removedIngredients: item.removedIngredients,
+        specialInstructions: item.specialInstructions || undefined,
+        unitPrice: item.unitPrice,
+        totalPrice: item.totalPrice,
+      }));
+
+      // Build delivery address string
+      const deliveryAddress =
+        selectedMode === "DELIVERY"
+          ? {
+              street: deliveryForm.street,
+              complement: deliveryForm.complement,
+              postalCode: deliveryForm.postalCode,
+              city: deliveryForm.city,
+              instructions: deliveryForm.instructions,
+            }
+          : undefined;
+
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: apiItems,
+          mode: selectedMode,
+          deliveryAddress,
+          customerInfo,
+          paymentMethod,
+          promoCode: cart.promoCode || undefined,
+          notes: deliveryForm.instructions || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: "Erreur inconnue" }));
+        throw new Error(data.error || `Erreur ${res.status}`);
+      }
+
+      const order = await res.json();
+
+      setOrderNumber(order.orderNumber);
+      setOrderPlacedAt(new Date());
+      setIsProcessing(false);
+      goNext();
+      cart.clearCart();
+      toast.success("Commande confirmee !");
+    } catch (error) {
+      setIsProcessing(false);
+      const message = error instanceof Error ? error.message : "Une erreur est survenue";
+      toast.error(message);
+    }
   };
 
   // ─── Helper: get user email for confirmation ─────────────────────────────────

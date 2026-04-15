@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Search,
   Download,
@@ -17,34 +17,61 @@ import {
   Calendar,
   Mail,
   Phone,
+  Loader2,
 } from "lucide-react";
-import {
-  mockClients,
-  segmentLabels,
-  segmentColors,
-  type AdminClient,
-} from "@/lib/admin-data";
 import { formatPrice, cn } from "@/lib/utils";
+import { segmentLabels, segmentColors, type AdminClient } from "@/lib/admin-data";
+import toast from "react-hot-toast";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ---- Types ----
 
 type SegmentFilter = "all" | "VIP" | "regular" | "new" | "inactive";
 type SortKey = "name" | "orders" | "totalSpent";
 type SortDir = "asc" | "desc";
 
-// ─── Component ───────────────────────────────────────────────────────────────
+// ---- Skeleton ----
+
+function Skeleton({ className }: { className?: string }) {
+  return (
+    <div className={cn("animate-pulse rounded-lg bg-gray-200", className)} />
+  );
+}
+
+// ---- Component ----
 
 export default function ClientsPage() {
+  const [clients, setClients] = useState<AdminClient[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [segmentFilter, setSegmentFilter] = useState<SegmentFilter>("all");
   const [sortKey, setSortKey] = useState<SortKey>("totalSpent");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // ─── Derived data ────────────────────────────────────────────────────────
+  // Fetch clients
+  const fetchClients = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/clients");
+      if (!res.ok) throw new Error("Erreur lors du chargement des clients");
+      const data: AdminClient[] = await res.json();
+      setClients(data);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Impossible de charger les clients"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchClients();
+  }, [fetchClients]);
+
+  // ---- Derived data ----
 
   const filteredClients = useMemo(() => {
-    let result = [...mockClients];
+    let result = [...clients];
 
     // Search
     if (search) {
@@ -72,20 +99,20 @@ export default function ClientsPage() {
     });
 
     return result;
-  }, [search, segmentFilter, sortKey, sortDir]);
+  }, [clients, search, segmentFilter, sortKey, sortDir]);
 
-  // ─── Stats ───────────────────────────────────────────────────────────────
+  // ---- Stats ----
 
   const stats = useMemo(() => {
-    const total = mockClients.length;
-    const vip = mockClients.filter((c) => c.segment === "VIP").length;
-    const newThisMonth = mockClients.filter((c) => c.segment === "new").length;
-    const totalSpent = mockClients.reduce((s, c) => s + c.totalSpent, 0);
+    const total = clients.length;
+    const vip = clients.filter((c) => c.segment === "VIP").length;
+    const newThisMonth = clients.filter((c) => c.segment === "new").length;
+    const totalSpent = clients.reduce((s, c) => s + c.totalSpent, 0);
     const avgSpent = total > 0 ? totalSpent / total : 0;
     return { total, vip, newThisMonth, avgSpent };
-  }, []);
+  }, [clients]);
 
-  // ─── Handlers ────────────────────────────────────────────────────────────
+  // ---- Handlers ----
 
   function handleSort(key: SortKey) {
     if (sortKey === key) {
@@ -114,7 +141,7 @@ export default function ClientsPage() {
       c.orders.toString(),
       c.totalSpent.toFixed(2),
       c.avgBasket.toFixed(2),
-      segmentLabels[c.segment],
+      segmentLabels[c.segment] ?? c.segment,
       c.lastOrder || "-",
     ]);
     const csv = [headers.join(";"), ...rows.map((r) => r.join(";"))].join("\n");
@@ -127,7 +154,7 @@ export default function ClientsPage() {
     URL.revokeObjectURL(url);
   }
 
-  // ─── Segment pills ──────────────────────────────────────────────────────
+  // ---- Segment pills ----
 
   const segmentFilters: { value: SegmentFilter; label: string }[] = [
     { value: "all", label: "Tous" },
@@ -137,7 +164,34 @@ export default function ClientsPage() {
     { value: "inactive", label: "Inactifs" },
   ];
 
-  // ─── Render ──────────────────────────────────────────────────────────────
+  // ---- Loading ----
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-10 w-36" />
+        </div>
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-xl bg-white p-6 shadow-sm">
+              <Skeleton className="h-4 w-24 mb-2" />
+              <Skeleton className="h-8 w-16" />
+            </div>
+          ))}
+        </div>
+        <Skeleton className="h-12 w-full" />
+        <div className="rounded-xl bg-white shadow-sm p-4 space-y-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ---- Render ----
 
   return (
     <div className="space-y-6">
@@ -329,7 +383,7 @@ export default function ClientsPage() {
   );
 }
 
-// ─── Client row ────────────────────────────────────────────────────────────
+// ---- Client row ----
 
 function ClientRow({
   client,
@@ -380,10 +434,10 @@ function ClientRow({
           <span
             className={cn(
               "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
-              segmentColors[client.segment]
+              segmentColors[client.segment] ?? "bg-gray-100 text-gray-600"
             )}
           >
-            {segmentLabels[client.segment]}
+            {segmentLabels[client.segment] ?? client.segment}
           </span>
         </td>
 
@@ -505,10 +559,10 @@ function ClientRow({
                     <span
                       className={cn(
                         "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                        segmentColors[client.segment]
+                        segmentColors[client.segment] ?? "bg-gray-100 text-gray-600"
                       )}
                     >
-                      {segmentLabels[client.segment]}
+                      {segmentLabels[client.segment] ?? client.segment}
                     </span>
                   </div>
                   <div className="border-t border-gray-100 pt-3">
