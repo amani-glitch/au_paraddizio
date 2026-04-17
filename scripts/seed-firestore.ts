@@ -228,8 +228,10 @@ async function main() {
   console.log(`✓ ${productsData.length} produits`);
 
   // USERS
-  const adminPassword = await bcrypt.hash("admin123", 10);
-  const customerPassword = await bcrypt.hash("demo1234", 10);
+  const ADMIN_PWD = process.env.ADMIN_PASSWORD || "admin123";
+  const CUSTOMER_PWD = process.env.CUSTOMER_PASSWORD || "demo1234";
+  const adminPassword = await bcrypt.hash(ADMIN_PWD, 10);
+  const customerPassword = await bcrypt.hash(CUSTOMER_PWD, 10);
   const now = new Date().toISOString();
 
   const adminRef = await col.users.add({
@@ -448,8 +450,8 @@ async function main() {
 
   console.log("\n✅ Seed Firestore terminé !");
   console.log("\n🔑 Comptes de test :");
-  console.log("  Admin   → admin@paradizzio.fr / admin123");
-  console.log("  Client  → marie@example.com   / demo1234");
+  console.log(`  Admin   → admin@paradizzio.fr / ${ADMIN_PWD}`);
+  console.log(`  Client  → marie@example.com   / ${CUSTOMER_PWD}`);
 }
 
 main()

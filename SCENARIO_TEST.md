@@ -6,7 +6,7 @@
 ```env
 GOOGLE_CLOUD_PROJECT="adp-413110"
 FIRESTORE_DATABASE_ID="paradizzio"
-JWT_SECRET="<clé-secrète-production>"
+JWT_SECRET="<générer-avec-openssl-rand-base64-48>"
 NEXTAUTH_URL="https://votre-domaine.com"
 
 # Google OAuth (optionnel pour Google Login)
@@ -14,10 +14,10 @@ GOOGLE_CLIENT_ID="<votre-client-id>.apps.googleusercontent.com"
 NEXT_PUBLIC_GOOGLE_CLIENT_ID="<votre-client-id>.apps.googleusercontent.com"
 
 # Google Gemini (bot IA)
-GEMINI_API_KEY="AIzaSyAoQEsHLWO--1vhNclSMJkYrLOwwtJSV-0"
+GEMINI_API_KEY="<votre-clé-gemini>"
 
 # Stripe (test mode)
-STRIPE_SECRET_KEY="sk_test_VOTRE_CLE_SECRETE"
+STRIPE_SECRET_KEY="<votre-clé-stripe-secrète>"
 STRIPE_PUBLISHABLE_KEY="pk_test_VOTRE_CLE_PUBLIQUE"
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_VOTRE_CLE_PUBLIQUE"
 STRIPE_WEBHOOK_SECRET="whsec_VOTRE_WEBHOOK_SECRET"

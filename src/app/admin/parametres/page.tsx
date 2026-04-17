@@ -827,12 +827,8 @@ function TabPaiement() {
   const [paypalEnabled, setPaypalEnabled] = useState(false);
   const [applePayEnabled, setApplePayEnabled] = useState(false);
   const [cashEnabled, setCashEnabled] = useState(true);
-  const [stripePublicKey, setStripePublicKey] = useState(
-    "pk_live_***************"
-  );
-  const [stripeSecretKey, setStripeSecretKey] = useState(
-    "sk_live_***************"
-  );
+  const [stripePublicKey, setStripePublicKey] = useState("");
+  const [stripeSecretKey, setStripeSecretKey] = useState("");
   const [showStripePublic, setShowStripePublic] = useState(false);
   const [showStripeSecret, setShowStripeSecret] = useState(false);
 
