@@ -67,14 +67,63 @@ export default function AdminNewProductPage() {
     setDietary(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !categoryId || !basePrice) {
       toast.error("Veuillez remplir les champs obligatoires");
       return;
     }
-    toast.success("Produit créé avec succès !");
-    router.push("/admin/produits");
+
+    setSaving(true);
+    try {
+      const validSizes = sizes
+        .filter((s) => s.name && s.price)
+        .map((s, i) => ({ id: `size-${i}`, name: s.name, price: parseFloat(s.price) }));
+
+      const validSupplements = supplements
+        .filter((s) => s.name && s.price)
+        .map((s, i) => ({ id: `sup-${i}`, name: s.name, price: parseFloat(s.price), category: s.category }));
+
+      const product = {
+        name,
+        slug: slug || slugify(name),
+        description,
+        categoryId,
+        basePrice: parseFloat(basePrice),
+        sizes: validSizes.length > 0 ? validSizes : [{ id: "size-0", name: "Standard", price: parseFloat(basePrice) }],
+        supplements: validSupplements,
+        isActive,
+        isNew,
+        isBestSeller,
+        isPromo,
+        isPizzaOfMonth,
+        allergens: allergens.map((a) => a.toLowerCase()),
+        dietary: dietary.map((d) => d.toLowerCase()),
+        image: "",
+        images: [],
+        order: 99,
+      };
+
+      const res = await fetch("/api/admin/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(product),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Erreur lors de la création");
+      }
+
+      toast.success("Produit créé avec succès !");
+      router.push("/admin/produits");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur lors de la création du produit");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Tag,
@@ -144,23 +144,7 @@ interface Promotion {
   expiry: string;
 }
 
-const promotions: Promotion[] = [
-  {
-    id: 1,
-    title: "BIENVENUE",
-    subtitle: "10 % sur votre première commande",
-    description:
-      "Nouveau client ? Profitez de 10 % de réduction sur l'ensemble de votre première commande en ligne. Utilisez le code ci-dessous lors du paiement.",
-    code: "BIENVENUE",
-    cta: { label: "Commander maintenant", href: "/menu" },
-    badge: "Nouveau client",
-    icon: <Tag className="w-7 h-7" />,
-    iconBg: "bg-accent/10 text-accent",
-    borderColor: "border-accent",
-    badgeStyle: "bg-accent/10 text-accent",
-    ctaStyle: "bg-accent hover:bg-accent/90 text-white",
-    expiry: "Offre sans date limite",
-  },
+const staticPromotions: Promotion[] = [
   {
     id: 2,
     title: "Pizza du Mois",
@@ -229,7 +213,58 @@ const loyaltySteps = [
 /*  Page component                                                           */
 /* ────────────────────────────────────────────────────────────────────────── */
 
+interface ApiPromo {
+  id: string;
+  code: string;
+  type: string;
+  value: number;
+  isActive: boolean;
+  description?: string;
+  expiresAt?: string | null;
+}
+
+function apiPromoToPromotion(p: ApiPromo, index: number): Promotion {
+  const colors = [
+    { iconBg: "bg-accent/10 text-accent", borderColor: "border-accent", badgeStyle: "bg-accent/10 text-accent", ctaStyle: "bg-accent hover:bg-accent/90 text-white" },
+    { iconBg: "bg-primary/10 text-primary", borderColor: "border-primary", badgeStyle: "bg-primary/10 text-primary", ctaStyle: "bg-primary hover:bg-primary/90 text-white" },
+    { iconBg: "bg-secondary/10 text-secondary", borderColor: "border-secondary", badgeStyle: "bg-secondary/10 text-secondary", ctaStyle: "bg-secondary hover:bg-secondary/90 text-white" },
+  ];
+  const c = colors[index % colors.length];
+  const subtitle = p.type === "percentage" ? `${p.value}% de réduction`
+    : p.type === "fixed" ? `${p.value}€ de réduction`
+    : "Livraison gratuite";
+
+  return {
+    id: 100 + index,
+    title: p.code,
+    subtitle,
+    description: p.description || subtitle,
+    code: p.code,
+    cta: { label: "Commander maintenant", href: "/menu" },
+    badge: "Code promo",
+    icon: <Tag className="w-7 h-7" />,
+    ...c,
+    expiry: p.expiresAt ? `Jusqu'au ${new Date(p.expiresAt).toLocaleDateString("fr-FR")}` : "Offre sans date limite",
+  };
+}
+
 export default function PromotionsPage() {
+  const [promotions, setPromotions] = useState<Promotion[]>(staticPromotions);
+
+  useEffect(() => {
+    fetch("/api/promotions")
+      .then((r) => r.ok ? r.json() : [])
+      .then((apiPromos: ApiPromo[]) => {
+        const activePromos = (Array.isArray(apiPromos) ? apiPromos : []).filter((p) => p.isActive);
+        const dbPromotions = activePromos.map(apiPromoToPromotion);
+        // DB promos first, then static marketing promos
+        setPromotions([...dbPromotions, ...staticPromotions]);
+      })
+      .catch(() => {
+        // Fallback to static only
+      });
+  }, []);
+
   return (
     <div className="min-h-screen bg-cream">
       {/* ── Hero banner ─────────────────────────────────────────────────── */}
