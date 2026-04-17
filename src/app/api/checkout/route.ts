@@ -3,6 +3,7 @@ import { getStripe } from "@/lib/stripe";
 import { createOrder } from "@/lib/db/orders";
 import { getSession } from "@/lib/auth";
 import { addLoyaltyPoints } from "@/lib/db/users";
+import { validatePromoCode } from "@/lib/db/promos";
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,10 +41,13 @@ export async function POST(request: NextRequest) {
     const deliveryFee = mode === "DELIVERY" ? 3 : 0;
     let discount = 0;
     if (promoCode) {
-      const code = String(promoCode).toUpperCase();
-      if (code === "BIENVENUE") discount = subtotal * 0.1;
-      else if (code === "PIZZA10") discount = Math.min(10, subtotal);
-      else if (code === "LIVRAISON") discount = deliveryFee;
+      const promoResult = await validatePromoCode(String(promoCode));
+      if (promoResult.valid && promoResult.promo) {
+        const p = promoResult.promo;
+        if (p.type === "percentage") discount = subtotal * (p.value / 100);
+        else if (p.type === "fixed") discount = Math.min(p.value, subtotal);
+        else if (p.type === "free_delivery") discount = deliveryFee;
+      }
     }
     const total = Math.round((subtotal + deliveryFee - discount) * 100) / 100;
 

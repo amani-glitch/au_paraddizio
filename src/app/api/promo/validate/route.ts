@@ -1,34 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-interface PromoResult {
-  valid: boolean;
-  code: string;
-  type: "percentage" | "fixed" | "delivery" | null;
-  value: number;
-  message: string;
-}
-
-const PROMO_CODES: Record<
-  string,
-  { type: "percentage" | "fixed" | "delivery"; value: number; minOrder?: number; description: string }
-> = {
-  BIENVENUE: {
-    type: "percentage",
-    value: 10,
-    description: "10% de reduction sur votre commande",
-  },
-  PIZZA10: {
-    type: "fixed",
-    value: 10,
-    minOrder: 15,
-    description: "10 EUR de reduction sur votre commande",
-  },
-  LIVRAISON: {
-    type: "delivery",
-    value: 0,
-    description: "Livraison gratuite",
-  },
-};
+import { validatePromoCode } from "@/lib/db/promos";
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,59 +7,68 @@ export async function POST(request: NextRequest) {
     const { code, orderTotal } = body;
 
     if (!code || typeof code !== "string") {
-      return NextResponse.json(
-        {
-          valid: false,
-          code: code ?? "",
-          type: null,
-          value: 0,
-          message: "Please provide a promo code",
-        } satisfies PromoResult,
-        { status: 400 }
-      );
+      return NextResponse.json({
+        valid: false,
+        code: code ?? "",
+        type: null,
+        value: 0,
+        message: "Veuillez saisir un code promo",
+      }, { status: 400 });
     }
 
     const normalizedCode = code.trim().toUpperCase();
-    const promo = PROMO_CODES[normalizedCode];
+    const result = await validatePromoCode(normalizedCode);
 
-    if (!promo) {
+    if (!result.valid || !result.promo) {
       return NextResponse.json({
         valid: false,
         code: normalizedCode,
         type: null,
         value: 0,
-        message: "Code promo invalide",
-      } satisfies PromoResult);
+        message: result.error || "Code promo invalide",
+      });
     }
 
-    // Check minimum order amount if applicable
-    if (promo.minOrder && typeof orderTotal === "number" && orderTotal < promo.minOrder) {
+    const promo = result.promo;
+
+    // Check minimum order amount
+    if (promo.minOrderAmount && typeof orderTotal === "number" && orderTotal < promo.minOrderAmount) {
       return NextResponse.json({
         valid: false,
         code: normalizedCode,
         type: null,
         value: 0,
-        message: `Commande minimum de ${promo.minOrder} EUR requise pour ce code`,
-      } satisfies PromoResult);
+        message: `Commande minimum de ${promo.minOrderAmount}€ requise pour ce code`,
+      });
     }
 
-    // Calculate the discount value
+    // Calculate discount
     let discountValue = promo.value;
     if (promo.type === "percentage" && typeof orderTotal === "number") {
       discountValue = Math.round(orderTotal * (promo.value / 100) * 100) / 100;
     }
 
+    const typeMap: Record<string, string> = {
+      percentage: "percentage",
+      fixed: "fixed",
+      free_delivery: "delivery",
+    };
+
     return NextResponse.json({
       valid: true,
       code: normalizedCode,
-      type: promo.type,
+      type: typeMap[promo.type] || promo.type,
       value: discountValue,
-      message: promo.description,
-    } satisfies PromoResult);
+      message: promo.type === "percentage"
+        ? `${promo.value}% de réduction sur votre commande`
+        : promo.type === "fixed"
+          ? `${promo.value}€ de réduction sur votre commande`
+          : "Livraison gratuite",
+    });
   } catch (error) {
     console.error("POST /api/promo/validate error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Erreur serveur" },
       { status: 500 }
     );
   }
