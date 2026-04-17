@@ -1,7 +1,8 @@
 "use client";
 
-import { use, useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import {
   ArrowLeft,
   Phone,
@@ -21,9 +22,9 @@ import {
   AlertTriangle,
   User,
   FileText,
+  Loader2,
 } from "lucide-react";
 import { formatPrice, cn } from "@/lib/utils";
-import { mockAdminOrders } from "@/lib/admin-data";
 import { format, parseISO, formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -198,20 +199,35 @@ function getNextActionIcon(status: OrderStatus, mode: OrderMode) {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export default function OrderDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = use(params);
+export default function OrderDetailPage() {
+  const { id } = useParams<{ id: string }>();
 
-  const initialOrder = (mockAdminOrders as Order[]).find((o) => o.id === id);
-
-  const [order, setOrder] = useState<Order | null>(initialOrder || null);
+  const [order, setOrder] = useState<Order | null>(null);
+  const [loading, setLoading] = useState(true);
   const [noteText, setNoteText] = useState("");
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showRefundConfirm, setShowRefundConfirm] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    fetch("/api/admin/orders")
+      .then((r) => r.json())
+      .then((orders: Order[]) => {
+        const found = orders.find((o) => o.id === id);
+        setOrder(found ?? null);
+      })
+      .catch(() => setOrder(null))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-cream">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!order) {
     return (

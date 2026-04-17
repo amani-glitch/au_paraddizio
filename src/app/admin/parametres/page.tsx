@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Save,
   Store,
@@ -17,7 +17,7 @@ import {
   Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { storeInfo, deliveryZones } from "@/lib/data";
+import type { StoreInfo, DeliveryZone } from "@/types";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -71,10 +71,31 @@ const dayNames = [
 export default function ParametresPage() {
   const [activeTab, setActiveTab] = useState<TabId>("general");
   const [saved, setSaved] = useState(false);
+  const [storeInfo, setStoreInfo] = useState<StoreInfo | null>(null);
+  const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/store")
+      .then(r => r.json())
+      .then((data) => {
+        setStoreInfo(data);
+        setDeliveryZones(data.deliveryZones ?? []);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   function handleSave() {
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  }
+
+  if (loading || !storeInfo) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
   }
 
   return (
@@ -106,9 +127,9 @@ export default function ParametresPage() {
 
       {/* Tab content */}
       <div className="rounded-xl bg-white p-6 shadow-sm">
-        {activeTab === "general" && <TabGeneral />}
-        {activeTab === "horaires" && <TabHoraires />}
-        {activeTab === "livraison" && <TabLivraison />}
+        {activeTab === "general" && <TabGeneral storeInfo={storeInfo} />}
+        {activeTab === "horaires" && <TabHoraires storeInfo={storeInfo} />}
+        {activeTab === "livraison" && <TabLivraison deliveryZones={deliveryZones} />}
         {activeTab === "paiement" && <TabPaiement />}
 
         {/* Save button */}
@@ -134,7 +155,7 @@ export default function ParametresPage() {
 
 // ─── Tab General ─────────────────────────────────────────────────────────────
 
-function TabGeneral() {
+function TabGeneral({ storeInfo }: { storeInfo: StoreInfo }) {
   const [name, setName] = useState(storeInfo.name);
   const [address, setAddress] = useState(storeInfo.address);
   const [phone, setPhone] = useState(storeInfo.phone);
@@ -286,7 +307,7 @@ function TabGeneral() {
 
 // ─── Tab Horaires ────────────────────────────────────────────────────────────
 
-function TabHoraires() {
+function TabHoraires({ storeInfo }: { storeInfo: StoreInfo }) {
   const [hours, setHours] = useState<HourRow[]>(() =>
     storeInfo.openingHours.map((h) => ({
       dayOfWeek: h.dayOfWeek,
@@ -475,7 +496,7 @@ function TabHoraires() {
 
 // ─── Tab Livraison ───────────────────────────────────────────────────────────
 
-function TabLivraison() {
+function TabLivraison({ deliveryZones }: { deliveryZones: DeliveryZone[] }) {
   const [zones, setZones] = useState<DeliveryZoneForm[]>(() =>
     deliveryZones.map((z) => ({
       id: z.id,

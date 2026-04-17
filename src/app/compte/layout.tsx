@@ -19,7 +19,7 @@ const navItems = [
   { href: "/compte/commandes", label: "Mes commandes", icon: ShoppingBag },
   { href: "/compte/adresses", label: "Mes adresses", icon: MapPin },
   { href: "/compte/favoris", label: "Mes favoris", icon: Heart },
-  { href: "/compte/fidelite", label: "Programme de fid\u00e9lit\u00e9", icon: Award },
+  { href: "/compte/fidelite", label: "Programme de fidélité", icon: Award },
 ];
 
 export default function CompteLayout({ children }: { children: React.ReactNode }) {
@@ -110,7 +110,7 @@ export default function CompteLayout({ children }: { children: React.ReactNode }
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-500 transition-colors hover:bg-red-50"
               >
                 <LogOut className="h-4 w-4" />
-                D&eacute;connexion
+                Déconnexion
               </button>
             </div>
           </div>

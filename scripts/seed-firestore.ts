@@ -11,6 +11,8 @@ const col = {
   categories: firestore.collection("categories"),
   products: firestore.collection("products"),
   orders: firestore.collection("orders"),
+  storeSettings: firestore.collection("storeSettings"),
+  promoCodes: firestore.collection("promoCodes"),
 };
 
 async function wipeCollection(ref: FirebaseFirestore.CollectionReference) {
@@ -28,6 +30,8 @@ async function main() {
   await wipeCollection(col.categories);
   await wipeCollection(col.products);
   await wipeCollection(col.orders);
+  await wipeCollection(col.storeSettings);
+  await wipeCollection(col.promoCodes);
 
   // CATEGORIES
   const categoriesData = [
@@ -354,6 +358,93 @@ async function main() {
     await col.orders.add({ ...o, updatedAt: o.createdAt });
   }
   console.log(`✓ ${ordersData.length} commandes historiques`);
+
+  // STORE SETTINGS
+  await col.storeSettings.doc("main").set({
+    storeInfo: {
+      name: "Au Paradizzio Pizzas",
+      address: "711 Route de Carpentras, 84320 Entraigues-sur-la-Sorgue",
+      phone: "04 90 48 18 60",
+      email: "contact@paradizzio.fr",
+      isOpen: true,
+      openingHours: [
+        { dayOfWeek: 0, openTime: "17:30", closeTime: "21:30", isClosed: false }, // Dimanche
+        { dayOfWeek: 1, openTime: "00:00", closeTime: "00:00", isClosed: true },  // Lundi - Fermé
+        { dayOfWeek: 2, openTime: "17:30", closeTime: "21:30", isClosed: false }, // Mardi
+        { dayOfWeek: 3, openTime: "17:30", closeTime: "21:30", isClosed: false }, // Mercredi
+        { dayOfWeek: 4, openTime: "17:30", closeTime: "21:30", isClosed: false }, // Jeudi
+        { dayOfWeek: 5, openTime: "17:30", closeTime: "22:00", isClosed: false }, // Vendredi
+        { dayOfWeek: 6, openTime: "17:30", closeTime: "22:00", isClosed: false }, // Samedi
+      ],
+    },
+    deliveryZones: [
+      {
+        id: "zone-entraigues",
+        name: "Entraigues-sur-la-Sorgue",
+        postalCodes: ["84320"],
+        deliveryFee: 0,
+        minOrderAmount: 15,
+        estimatedMinutes: 20,
+        freeDeliveryAbove: 15,
+      },
+      {
+        id: "zone-proche",
+        name: "Communes proches",
+        postalCodes: ["84170", "84130", "84000"],
+        deliveryFee: 3,
+        minOrderAmount: 20,
+        estimatedMinutes: 35,
+        freeDeliveryAbove: 35,
+      },
+    ],
+  });
+  console.log("✓ Store settings");
+
+  // PROMO CODES
+  const promoCodesData = [
+    {
+      id: "promo-bienvenue",
+      code: "BIENVENUE",
+      type: "percentage",
+      value: 10,
+      isActive: true,
+      expiresAt: null,
+      minOrderAmount: 0,
+      maxUses: null,
+      usedCount: 0,
+      createdAt: now,
+    },
+    {
+      id: "promo-pizza10",
+      code: "PIZZA10",
+      type: "fixed",
+      value: 10,
+      isActive: true,
+      expiresAt: null,
+      minOrderAmount: 0,
+      maxUses: null,
+      usedCount: 0,
+      createdAt: now,
+    },
+    {
+      id: "promo-livraison",
+      code: "LIVRAISON",
+      type: "free_delivery",
+      value: 0,
+      isActive: true,
+      expiresAt: null,
+      minOrderAmount: 0,
+      maxUses: null,
+      usedCount: 0,
+      createdAt: now,
+    },
+  ];
+
+  for (const promo of promoCodesData) {
+    const { id, ...data } = promo;
+    await col.promoCodes.doc(id).set(data);
+  }
+  console.log(`✓ ${promoCodesData.length} codes promo`);
 
   console.log("\n✅ Seed Firestore terminé !");
   console.log("\n🔑 Comptes de test :");

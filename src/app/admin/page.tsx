@@ -340,7 +340,7 @@ export default function AdminDashboard() {
                     className="flex flex-col items-center flex-1 gap-1"
                   >
                     <span className="text-xs font-medium text-gray-600">
-                      {value} &euro;
+                      {value} €
                     </span>
                     <div className="w-full relative" style={{ height: "160px" }}>
                       <div

@@ -38,19 +38,19 @@ const allergenLabels: Record<string, string> = {
   poisson: "Poisson",
   arachide: "Arachide",
   soja: "Soja",
-  "fruits-a-coque": "Fruits \u00e0 coque",
-  celeri: "C\u00e9leri",
+  "fruits-a-coque": "Fruits à coque",
+  celeri: "Céleri",
   moutarde: "Moutarde",
-  sesame: "S\u00e9same",
+  sesame: "Sésame",
   sulfites: "Sulfites",
   lupin: "Lupin",
   mollusques: "Mollusques",
-  crustaces: "Crustac\u00e9s",
+  crustaces: "Crustacés",
 };
 
 const dietaryLabels: Record<string, string> = {
-  vegetarian: "V\u00e9g\u00e9tarien",
-  vegan: "V\u00e9gan",
+  vegetarian: "Végétarien",
+  vegan: "Végan",
   halal: "Halal",
   "sans-gluten": "Sans gluten",
 };
@@ -140,7 +140,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           {/* Price */}
           <p className="mt-1 font-heading text-lg font-bold text-primary">
             {product.sizes.length > 1
-              ? `\u00C0 partir de ${formatPrice(lowestPrice)}`
+              ? `À partir de ${formatPrice(lowestPrice)}`
               : formatPrice(lowestPrice)}
           </p>
 

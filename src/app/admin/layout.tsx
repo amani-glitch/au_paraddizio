@@ -75,16 +75,23 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
+    // If no user in store, check if we have a session cookie
     if (!user) {
-      setUser({
-        id: "admin-1",
-        name: "Adrien Baldelli",
-        email: "adrien@paradizzio.fr",
-        role: "ADMIN",
-        loyaltyPoints: 0,
-        addresses: [],
-        phone: "04 90 48 18 60",
-      });
+      fetch("/api/auth/me")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (data?.user) {
+            setUser(data.user);
+          } else {
+            // Not authenticated -> redirect to login
+            window.location.href = "/connexion";
+          }
+        })
+        .catch(() => {
+          window.location.href = "/connexion";
+        });
+    } else if (user.role !== "ADMIN" && user.role !== "MANAGER") {
+      window.location.href = "/compte";
     }
   }, [user, setUser]);
 

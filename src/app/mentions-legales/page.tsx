@@ -37,11 +37,11 @@ export default function MentionsLegalesPage() {
       <section className="bg-gradient-to-br from-wood via-wood to-wood-light py-16 sm:py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="font-heading text-4xl sm:text-5xl font-bold text-white mb-4">
-            Mentions L&eacute;gales
+            Mentions Légales
           </h1>
           <p className="text-cream/70 text-sm">
-            Conform&eacute;ment &agrave; la loi n&deg; 2004-575 du 21 juin 2004 pour la
-            confiance dans l&apos;&eacute;conomie num&eacute;rique.
+            Conformément à la loi n° 2004-575 du 21 juin 2004 pour la
+            confiance dans l&apos;économie numérique.
           </p>
         </div>
       </section>
@@ -50,23 +50,23 @@ export default function MentionsLegalesPage() {
       <section className="py-16 sm:py-20 bg-cream">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-2xl shadow-sm border border-wood/5 p-8 sm:p-12">
-            <Section title="1. &Eacute;diteur du site">
+            <Section title="1. Éditeur du site">
               <p>
-                Le site paradizzio.fr est &eacute;dit&eacute; par :
+                Le site paradizzio.fr est édité par :
               </p>
               <div className="bg-offwhite rounded-xl p-5 text-sm space-y-1">
                 <p>
                   <strong className="text-wood">SARL BALDO</strong>
                 </p>
-                <p>Capital social : 6 000 &euro;</p>
+                <p>Capital social : 6 000 €</p>
                 <p>SIREN : 935 005 637</p>
                 <p>RCS Avignon</p>
                 <p>
-                  Si&egrave;ge social : 711 Route de Carpentras, 84320
+                  Siège social : 711 Route de Carpentras, 84320
                   Entraigues-sur-la-Sorgue
                 </p>
                 <p>
-                  T&eacute;l&eacute;phone :{" "}
+                  Téléphone :{" "}
                   <a
                     href="tel:0490481860"
                     className="text-primary hover:text-primary-dark font-semibold"
@@ -90,83 +90,83 @@ export default function MentionsLegalesPage() {
               <p>
                 Le directeur de la publication est{" "}
                 <strong className="text-wood">Monsieur Adrien Baldelli</strong>,
-                en sa qualit&eacute; de g&eacute;rant de la SARL BALDO.
+                en sa qualité de gérant de la SARL BALDO.
               </p>
             </Section>
 
-            <Section title="3. H&eacute;bergement">
-              <p>Le site est h&eacute;berg&eacute; par :</p>
+            <Section title="3. Hébergement">
+              <p>Le site est hébergé par :</p>
               <div className="bg-offwhite rounded-xl p-5 text-sm space-y-1">
                 <p>
                   <strong className="text-wood">Vercel Inc.</strong>
                 </p>
                 <p>440 N Barranca Ave #4133</p>
-                <p>Covina, CA 91723, &Eacute;tats-Unis</p>
+                <p>Covina, CA 91723, États-Unis</p>
                 <p>Site : vercel.com</p>
               </div>
             </Section>
 
-            <Section title="4. Propri&eacute;t&eacute; intellectuelle">
+            <Section title="4. Propriété intellectuelle">
               <p>
-                L&apos;ensemble des contenus pr&eacute;sents sur le site paradizzio.fr
-                (textes, images, graphismes, logo, ic&ocirc;nes, vid&eacute;os, logiciels,
-                base de donn&eacute;es) est prot&eacute;g&eacute; par les dispositions du Code de
-                la propri&eacute;t&eacute; intellectuelle et appartient &agrave; la SARL BALDO ou
+                L&apos;ensemble des contenus présents sur le site paradizzio.fr
+                (textes, images, graphismes, logo, icônes, vidéos, logiciels,
+                base de données) est protégé par les dispositions du Code de
+                la propriété intellectuelle et appartient à la SARL BALDO ou
                 fait l&apos;objet d&apos;une autorisation d&apos;utilisation.
               </p>
               <p>
-                Toute reproduction, repr&eacute;sentation, modification, publication
-                ou adaptation de tout ou partie des &eacute;l&eacute;ments du site, quel que
-                soit le moyen ou le proc&eacute;d&eacute; utilis&eacute;, est interdite sans
-                l&apos;autorisation &eacute;crite pr&eacute;alable de la SARL BALDO.
+                Toute reproduction, représentation, modification, publication
+                ou adaptation de tout ou partie des éléments du site, quel que
+                soit le moyen ou le procédé utilisé, est interdite sans
+                l&apos;autorisation écrite préalable de la SARL BALDO.
               </p>
               <p>
-                Toute exploitation non autoris&eacute;e du site ou de ses contenus
-                sera consid&eacute;r&eacute;e comme constitutive d&apos;une contrefa&ccedil;on et
-                poursuivie conform&eacute;ment aux articles L.335-2 et suivants du
-                Code de la propri&eacute;t&eacute; intellectuelle.
+                Toute exploitation non autorisée du site ou de ses contenus
+                sera considérée comme constitutive d&apos;une contrefaçon et
+                poursuivie conformément aux articles L.335-2 et suivants du
+                Code de la propriété intellectuelle.
               </p>
             </Section>
 
-            <Section title="5. Responsabilit&eacute;">
+            <Section title="5. Responsabilité">
               <p>
-                La SARL BALDO s&apos;efforce d&apos;assurer l&apos;exactitude et la mise &agrave;
-                jour des informations diffus&eacute;es sur le site. Toutefois, elle
-                ne peut garantir que les informations soient compl&egrave;tes,
-                pr&eacute;cises, exactes ou non susceptibles d&apos;&ecirc;tre modifi&eacute;es par un
+                La SARL BALDO s&apos;efforce d&apos;assurer l&apos;exactitude et la mise à
+                jour des informations diffusées sur le site. Toutefois, elle
+                ne peut garantir que les informations soient complètes,
+                précises, exactes ou non susceptibles d&apos;être modifiées par un
                 tiers.
               </p>
               <p>
-                La SARL BALDO ne pourra &ecirc;tre tenue responsable de tout
-                dommage direct ou indirect r&eacute;sultant de l&apos;acc&egrave;s au site ou
-                de l&apos;utilisation de celui-ci, y compris l&apos;inaccessibilit&eacute;, les
-                pertes de donn&eacute;es, les d&eacute;t&eacute;riorations, les destructions ou les
-                virus qui pourraient affecter l&apos;&eacute;quipement informatique de
+                La SARL BALDO ne pourra être tenue responsable de tout
+                dommage direct ou indirect résultant de l&apos;accès au site ou
+                de l&apos;utilisation de celui-ci, y compris l&apos;inaccessibilité, les
+                pertes de données, les détériorations, les destructions ou les
+                virus qui pourraient affecter l&apos;équipement informatique de
                 l&apos;utilisateur.
               </p>
               <p>
                 Le site peut contenir des liens hypertextes vers d&apos;autres
-                sites. La SARL BALDO ne dispose d&apos;aucun moyen de contr&ocirc;le du
-                contenu de ces sites tiers et n&apos;assume aucune responsabilit&eacute;
-                &agrave; cet &eacute;gard.
+                sites. La SARL BALDO ne dispose d&apos;aucun moyen de contrôle du
+                contenu de ces sites tiers et n&apos;assume aucune responsabilité
+                à cet égard.
               </p>
             </Section>
 
-            <Section title="6. Donn&eacute;es personnelles">
+            <Section title="6. Données personnelles">
               <p>
-                Les donn&eacute;es personnelles collect&eacute;es sur ce site sont trait&eacute;es
-                conform&eacute;ment au R&egrave;glement G&eacute;n&eacute;ral sur la Protection des
-                Donn&eacute;es (RGPD) et &agrave; la loi n&deg; 78-17 du 6 janvier 1978
-                relative &agrave; l&apos;informatique, aux fichiers et aux libert&eacute;s.
+                Les données personnelles collectées sur ce site sont traitées
+                conformément au Règlement Général sur la Protection des
+                Données (RGPD) et à la loi n° 78-17 du 6 janvier 1978
+                relative à l&apos;informatique, aux fichiers et aux libertés.
               </p>
               <p>
-                Pour en savoir plus sur le traitement de vos donn&eacute;es
+                Pour en savoir plus sur le traitement de vos données
                 personnelles, veuillez consulter notre{" "}
                 <Link
                   href="/politique-de-confidentialite"
                   className="text-primary hover:text-primary-dark font-semibold"
                 >
-                  Politique de confidentialit&eacute;
+                  Politique de confidentialité
                 </Link>
                 .
               </p>
@@ -175,9 +175,9 @@ export default function MentionsLegalesPage() {
             <Section title="7. Cookies">
               <p>
                 Le site paradizzio.fr utilise des cookies pour assurer son
-                bon fonctionnement et am&eacute;liorer l&apos;exp&eacute;rience utilisateur. Lors
-                de votre premi&egrave;re visite, un bandeau de consentement vous
-                permet de g&eacute;rer vos pr&eacute;f&eacute;rences en mati&egrave;re de cookies.
+                bon fonctionnement et améliorer l&apos;expérience utilisateur. Lors
+                de votre première visite, un bandeau de consentement vous
+                permet de gérer vos préférences en matière de cookies.
               </p>
               <p>
                 Pour en savoir plus, consultez notre{" "}
@@ -185,7 +185,7 @@ export default function MentionsLegalesPage() {
                   href="/politique-de-confidentialite"
                   className="text-primary hover:text-primary-dark font-semibold"
                 >
-                  Politique de confidentialit&eacute;
+                  Politique de confidentialité
                 </Link>
                 .
               </p>
@@ -193,10 +193,10 @@ export default function MentionsLegalesPage() {
 
             <Section title="8. Loi applicable">
               <p>
-                Les pr&eacute;sentes mentions l&eacute;gales sont r&eacute;gies par le droit
-                fran&ccedil;ais. En cas de litige, les tribunaux comp&eacute;tents du
+                Les présentes mentions légales sont régies par le droit
+                français. En cas de litige, les tribunaux compétents du
                 ressort du <strong className="text-wood">Tribunal d&apos;Avignon</strong>{" "}
-                seront seuls comp&eacute;tents.
+                seront seuls compétents.
               </p>
             </Section>
           </div>

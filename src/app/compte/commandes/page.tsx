@@ -13,12 +13,12 @@ import type { Order, OrderStatus } from "@/types";
 
 const statusLabels: Record<OrderStatus, string> = {
   PENDING: "En attente",
-  ACCEPTED: "Accept\u00e9e",
-  PREPARING: "En pr\u00e9paration",
-  READY: "Pr\u00eate",
+  ACCEPTED: "Acceptée",
+  PREPARING: "En préparation",
+  READY: "Prête",
   DELIVERING: "En livraison",
-  DELIVERED: "Livr\u00e9e",
-  CANCELLED: "Annul\u00e9e",
+  DELIVERED: "Livrée",
+  CANCELLED: "Annulée",
 };
 
 const statusColors: Record<OrderStatus, string> = {
@@ -84,7 +84,7 @@ function OrderCard({ order }: { order: Order }) {
               {order.mode === "DELIVERY"
                 ? "Livraison"
                 : order.mode === "TAKEAWAY"
-                  ? "\u00C0 emporter"
+                  ? "À emporter"
                   : "Sur place"}
             </span>
           </div>
@@ -137,7 +137,7 @@ function OrderCard({ order }: { order: Order }) {
               <tr className="text-left text-xs text-gray-500">
                 <th className="pb-2 font-medium">Produit</th>
                 <th className="pb-2 font-medium">Taille</th>
-                <th className="pb-2 text-center font-medium">Qt&eacute;</th>
+                <th className="pb-2 text-center font-medium">Qté</th>
                 <th className="pb-2 text-right font-medium">Total</th>
               </tr>
             </thead>
@@ -179,7 +179,7 @@ function OrderCard({ order }: { order: Order }) {
             )}
             {order.discount > 0 && (
               <div className="flex gap-8">
-                <span className="text-gray-500">R&eacute;duction</span>
+                <span className="text-gray-500">Réduction</span>
                 <span className="font-medium text-secondary">
                   -{formatPrice(order.discount)}
                 </span>
@@ -266,7 +266,7 @@ export default function CommandesPage() {
             Aucune commande pour le moment
           </p>
           <p className="mt-1 text-sm text-gray-400">
-            Vos commandes appara&icirc;tront ici.
+            Vos commandes apparaîtront ici.
           </p>
         </div>
       ) : (

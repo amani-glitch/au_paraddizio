@@ -64,7 +64,7 @@ export default function AdminProductsPage() {
   const fetchData = useCallback(async () => {
     try {
       const [productsRes, categoriesRes] = await Promise.all([
-        fetch("/api/products"),
+        fetch("/api/products?all=true"),
         fetch("/api/categories"),
       ]);
 
@@ -116,17 +116,54 @@ export default function AdminProductsPage() {
     pizzaOfMonth: localProducts.filter(p => p.isPizzaOfMonth).length,
   }), [localProducts]);
 
-  const toggleActive = (id: string) => {
-    setLocalProducts(prev => prev.map(p => p.id === id ? { ...p, isActive: !p.isActive } : p));
+  const toggleActive = async (id: string) => {
+    const product = localProducts.find(p => p.id === id);
+    if (!product) return;
+    const newVal = !product.isActive;
+    setLocalProducts(prev => prev.map(p => p.id === id ? { ...p, isActive: newVal } : p));
+    try {
+      const res = await fetch(`/api/admin/products/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: newVal }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(newVal ? "Produit activé" : "Produit désactivé");
+    } catch {
+      setLocalProducts(prev => prev.map(p => p.id === id ? { ...p, isActive: !newVal } : p));
+      toast.error("Erreur lors de la mise à jour");
+    }
   };
 
-  const toggleBadge = (id: string, badge: "isNew" | "isBestSeller" | "isPromo" | "isPizzaOfMonth") => {
-    setLocalProducts(prev => prev.map(p => p.id === id ? { ...p, [badge]: !p[badge] } : p));
+  const toggleBadge = async (id: string, badge: "isNew" | "isBestSeller" | "isPromo" | "isPizzaOfMonth") => {
+    const product = localProducts.find(p => p.id === id);
+    if (!product) return;
+    const newVal = !product[badge];
+    setLocalProducts(prev => prev.map(p => p.id === id ? { ...p, [badge]: newVal } : p));
+    try {
+      const res = await fetch(`/api/admin/products/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [badge]: newVal }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setLocalProducts(prev => prev.map(p => p.id === id ? { ...p, [badge]: !newVal } : p));
+      toast.error("Erreur lors de la mise à jour");
+    }
   };
 
-  const deleteProduct = (id: string) => {
-    if (confirm("Supprimer ce produit ?")) {
-      setLocalProducts(prev => prev.filter(p => p.id !== id));
+  const deleteProduct = async (id: string) => {
+    if (!confirm("Supprimer ce produit ?")) return;
+    const backup = localProducts;
+    setLocalProducts(prev => prev.filter(p => p.id !== id));
+    try {
+      const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      toast.success("Produit supprimé");
+    } catch {
+      setLocalProducts(backup);
+      toast.error("Erreur lors de la suppression");
     }
   };
 

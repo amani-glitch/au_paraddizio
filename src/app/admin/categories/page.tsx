@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Pencil, Trash2, Save, X, Grid3x3 } from "lucide-react";
-import { categories, products } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
+import type { Category, Product } from "@/types";
 
 const categoryEmojis: Record<string, string> = {
   "cat-pizzas": "🍕", "cat-entrees": "🥗", "cat-desserts": "🍰",
@@ -15,12 +15,24 @@ interface CategoryForm { name: string; slug: string; description: string; order:
 const emptyForm: CategoryForm = { name: "", slug: "", description: "", order: 0, isActive: true };
 
 export default function AdminCategoriesPage() {
-  const [localCategories, setLocalCategories] = useState(categories.map(c => ({ ...c, isActive: true })));
+  const [localCategories, setLocalCategories] = useState<(Category & { isActive: boolean })[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState<CategoryForm>(emptyForm);
 
-  const productCount = (catId: string) => products.filter(p => p.categoryId === catId).length;
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/categories").then(r => r.json()),
+      fetch("/api/products").then(r => r.json()),
+    ]).then(([cats, prods]) => {
+      setLocalCategories((cats as Category[]).map(c => ({ ...c, isActive: true })));
+      setAllProducts(prods);
+    }).finally(() => setLoading(false));
+  }, []);
+
+  const productCount = (catId: string) => allProducts.filter(p => p.categoryId === catId).length;
 
   const startEdit = (cat: typeof localCategories[0]) => {
     setEditingId(cat.id);
@@ -97,6 +109,14 @@ export default function AdminCategoriesPage() {
       </div>
     </div>
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div>

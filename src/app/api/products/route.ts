@@ -7,7 +7,8 @@ export async function GET(request: NextRequest) {
     const categorySlug = searchParams.get("category") ?? undefined;
     const search = searchParams.get("search") ?? undefined;
 
-    const products = await listProducts({ categorySlug, search });
+    const showAll = searchParams.get("all") === "true";
+    const products = await listProducts({ categorySlug, search, activeOnly: !showAll });
     return NextResponse.json(products);
   } catch (error) {
     console.error("GET /api/products error:", error);

@@ -87,7 +87,7 @@ export default function AProposPage() {
           </h1>
           <p className="text-lg sm:text-xl text-cream/80 max-w-2xl mx-auto leading-relaxed">
             Une passion familiale pour la pizza authentique, transmise de
-            g&eacute;n&eacute;ration en g&eacute;n&eacute;ration.
+            génération en génération.
           </p>
         </div>
 
@@ -118,26 +118,26 @@ export default function AProposPage() {
 
               <p className="text-wood-light leading-relaxed text-lg mb-5">
                 L&apos;histoire d&apos;<strong className="text-wood">Au Paradizzio</strong>{" "}
-                commence au 711 Route de Carpentras, &agrave;
+                commence au 711 Route de Carpentras, à
                 Entraigues-sur-la-Sorgue. Cette pizzeria est devenue au fil des
-                ann&eacute;es une v&eacute;ritable institution pour les amateurs de pizza
+                années une véritable institution pour les amateurs de pizza
                 authentique dans le Vaucluse.
               </p>
 
               <p className="text-wood-light leading-relaxed text-lg mb-5">
                 En novembre 2024,{" "}
                 <strong className="text-wood">Adrien Baldelli</strong> et son
-                p&egrave;re <strong className="text-wood">Aldo</strong> reprennent
-                l&apos;&eacute;tablissement avec une passion d&eacute;bordante pour la vraie pizza
-                italienne. Ensemble, ils perp&eacute;tuent la tradition du{" "}
-                <strong className="text-wood">four &agrave; bois</strong> et de la{" "}
-                <strong className="text-wood">p&acirc;te maison</strong>, p&eacute;trie et
-                pr&eacute;par&eacute;e chaque jour sur place.
+                père <strong className="text-wood">Aldo</strong> reprennent
+                l&apos;établissement avec une passion débordante pour la vraie pizza
+                italienne. Ensemble, ils perpétuent la tradition du{" "}
+                <strong className="text-wood">four à bois</strong> et de la{" "}
+                <strong className="text-wood">pâte maison</strong>, pétrie et
+                préparée chaque jour sur place.
               </p>
 
               <p className="text-wood-light leading-relaxed text-lg">
-                Leur philosophie est simple : des ingr&eacute;dients frais, un
-                savoir-faire artisanal et l&apos;amour du m&eacute;tier. Chaque pizza qui
+                Leur philosophie est simple : des ingrédients frais, un
+                savoir-faire artisanal et l&apos;amour du métier. Chaque pizza qui
                 sort du four raconte cette histoire de passion et de tradition.
               </p>
             </div>
@@ -147,7 +147,7 @@ export default function AProposPage() {
               <div className="aspect-[4/3] rounded-3xl bg-gradient-to-br from-wood/10 to-primary/5 flex flex-col items-center justify-center border-2 border-dashed border-wood/15">
                 <Flame className="w-16 h-16 text-primary/30 mb-4" />
                 <span className="text-wood/40 font-heading text-lg">
-                  Four &agrave; bois traditionnel
+                  Four à bois traditionnel
                 </span>
               </div>
               <div className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-lg p-4 border border-wood/10">
@@ -174,8 +174,8 @@ export default function AProposPage() {
               Nos valeurs
             </h2>
             <p className="text-wood-light text-lg max-w-2xl mx-auto">
-              Ce qui fait la diff&eacute;rence Au Paradizzio, c&apos;est notre
-              engagement quotidien envers la qualit&eacute;.
+              Ce qui fait la différence Au Paradizzio, c&apos;est notre
+              engagement quotidien envers la qualité.
             </p>
             <div className="w-16 h-1 bg-secondary rounded-full mx-auto mt-4" />
           </div>
@@ -212,7 +212,7 @@ export default function AProposPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="font-heading text-3xl sm:text-4xl font-bold text-wood mb-3">
-              L&apos;&eacute;quipe
+              L&apos;équipe
             </h2>
             <div className="w-16 h-1 bg-accent rounded-full mx-auto" />
           </div>
@@ -223,7 +223,7 @@ export default function AProposPage() {
               <div className="flex-shrink-0 w-48 h-48 sm:w-56 sm:h-56 rounded-2xl bg-gradient-to-br from-wood/10 to-primary/5 flex flex-col items-center justify-center border-2 border-dashed border-wood/15">
                 <Users className="w-12 h-12 text-wood/30 mb-2" />
                 <span className="text-wood/40 text-sm font-heading">
-                  Photo &agrave; venir
+                  Photo à venir
                 </span>
               </div>
 
@@ -232,15 +232,15 @@ export default function AProposPage() {
                   Adrien &amp; Aldo Baldelli
                 </h3>
                 <p className="text-wood-light leading-relaxed text-lg mb-4">
-                  P&egrave;re et fils, unis par la m&ecirc;me passion. Aldo apporte son
-                  exp&eacute;rience et son savoir-faire transmis de g&eacute;n&eacute;ration en
-                  g&eacute;n&eacute;ration, tandis qu&apos;Adrien insuffle une &eacute;nergie nouvelle et
-                  une vision moderne &agrave; l&apos;&eacute;tablissement.
+                  Père et fils, unis par la même passion. Aldo apporte son
+                  expérience et son savoir-faire transmis de génération en
+                  génération, tandis qu&apos;Adrien insuffle une énergie nouvelle et
+                  une vision moderne à l&apos;établissement.
                 </p>
                 <p className="text-wood-light leading-relaxed">
                   Ensemble, ils partagent une conviction : la pizza est un art
-                  qui se respecte. Du choix des ingr&eacute;dients &agrave; la cuisson au feu
-                  de bois, chaque &eacute;tape est r&eacute;alis&eacute;e avec soin et passion.
+                  qui se respecte. Du choix des ingrédients à la cuisson au feu
+                  de bois, chaque étape est réalisée avec soin et passion.
                 </p>
               </div>
             </div>
@@ -261,13 +261,13 @@ export default function AProposPage() {
                   Tables et Auberges de France
                 </h2>
                 <p className="text-wood-light leading-relaxed text-lg">
-                  Au Paradizzio est fier d&apos;&ecirc;tre labellis&eacute;{" "}
+                  Au Paradizzio est fier d&apos;être labellisé{" "}
                   <strong className="text-wood">
                     Tables et Auberges de France
                   </strong>
-                  , un gage de qualit&eacute; reconnu qui r&eacute;compense les
-                  &eacute;tablissements offrant une cuisine authentique, un accueil
-                  chaleureux et un rapport qualit&eacute;-prix exemplaire.
+                  , un gage de qualité reconnu qui récompense les
+                  établissements offrant une cuisine authentique, un accueil
+                  chaleureux et un rapport qualité-prix exemplaire.
                 </p>
               </div>
             </div>
@@ -306,16 +306,16 @@ export default function AProposPage() {
       <section className="bg-gradient-to-r from-primary to-primary-dark py-14 sm:py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="font-heading text-3xl sm:text-4xl font-bold text-white mb-4">
-            Envie de go&ucirc;ter ?
+            Envie de goûter ?
           </h2>
           <p className="text-white/80 text-lg mb-8">
-            D&eacute;couvrez nos 60 recettes artisanales et laissez-vous tenter.
+            Découvrez nos 60 recettes artisanales et laissez-vous tenter.
           </p>
           <Link
             href="/menu"
             className="inline-flex items-center gap-3 bg-white hover:bg-cream text-primary font-bold text-lg px-10 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
           >
-            D&eacute;couvrir notre carte
+            Découvrir notre carte
             <ArrowRight className="w-5 h-5" />
           </Link>
         </div>

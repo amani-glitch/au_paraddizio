@@ -10,7 +10,7 @@ import { formatPrice, cn } from "@/lib/utils";
 const navLinks = [
   { href: "/menu", label: "Menu" },
   { href: "/promotions", label: "Promotions" },
-  { href: "/a-propos", label: "\u00C0 propos" },
+  { href: "/a-propos", label: "À propos" },
   { href: "/contact", label: "Contact" },
 ];
 

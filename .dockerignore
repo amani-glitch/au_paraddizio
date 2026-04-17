@@ -3,6 +3,12 @@ node_modules
 .git
 .env
 .env.local
+.env.production.local
 .claude
 AGENTS.md
 CLAUDE.md
+SCENARIO_TEST.md
+README.md
+prisma
+src/__tests__
+vitest.config.ts

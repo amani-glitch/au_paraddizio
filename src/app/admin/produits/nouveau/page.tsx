@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, X, Save } from "lucide-react";
-import { categories } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
+import type { Category } from "@/types";
 
 const allergensList = ["Gluten", "Lait", "Oeuf", "Poisson", "Crustacés", "Arachides", "Soja", "Fruits à coque", "Céleri", "Moutarde", "Sésame", "Sulfites", "Lupin", "Mollusques"];
 const dietaryList = ["Végétarien", "Végan", "Halal", "Sans gluten"];
@@ -17,6 +17,12 @@ function slugify(text: string): string {
 
 export default function AdminNewProductPage() {
   const router = useRouter();
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    fetch("/api/categories").then(r => r.json()).then(setCategories);
+  }, []);
+
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");

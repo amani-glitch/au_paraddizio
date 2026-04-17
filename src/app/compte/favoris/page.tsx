@@ -1,20 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Heart, HeartOff, ShoppingBag } from "lucide-react";
 import Link from "next/link";
-import { products } from "@/lib/data";
 import ProductCard from "@/components/ui/ProductCard";
 import type { Product } from "@/types";
 
-// Mock: first 4 products as favorites
-const initialFavorites = products.slice(0, 4);
-
 export default function FavorisPage() {
-  const [favorites, setFavorites] = useState<Product[]>(initialFavorites);
+  const [favorites, setFavorites] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/products")
+      .then(r => r.json())
+      .then((prods: Product[]) => setFavorites(prods.slice(0, 4)))
+      .finally(() => setLoading(false));
+  }, []);
 
   function removeFavorite(productId: string) {
     setFavorites((prev) => prev.filter((p) => p.id !== productId));
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <Heart className="h-6 w-6 text-red-500" />
+          <h1 className="font-heading text-2xl font-bold text-wood">Mes favoris</h1>
+        </div>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-64 animate-pulse rounded-2xl bg-gray-100" />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -33,7 +53,7 @@ export default function FavorisPage() {
             Aucun favori pour le moment
           </p>
           <p className="mt-1 mb-6 text-sm text-gray-400">
-            Parcourez notre menu et ajoutez vos produits pr&eacute;f&eacute;r&eacute;s.
+            Parcourez notre menu et ajoutez vos produits préférés.
           </p>
           <Link
             href="/menu"

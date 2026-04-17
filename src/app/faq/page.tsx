@@ -184,7 +184,7 @@ export default function FAQPage() {
             Foire aux questions
           </h1>
           <p className="text-lg text-cream/80 max-w-2xl mx-auto mb-8">
-            Retrouvez les r&eacute;ponses aux questions les plus fr&eacute;quentes sur
+            Retrouvez les réponses aux questions les plus fréquentes sur
             nos services, la livraison, le paiement et bien plus.
           </p>
 
@@ -229,7 +229,7 @@ export default function FAQPage() {
             <div className="text-center py-12">
               <Search className="w-12 h-12 text-wood-light/30 mx-auto mb-4" />
               <p className="text-wood-light text-lg">
-                Aucune question ne correspond &agrave; votre recherche.
+                Aucune question ne correspond à votre recherche.
               </p>
               <button
                 onClick={() => {
@@ -238,7 +238,7 @@ export default function FAQPage() {
                 }}
                 className="mt-4 text-primary hover:text-primary-dark font-semibold text-sm"
               >
-                R&eacute;initialiser la recherche
+                Réinitialiser la recherche
               </button>
             </div>
           ) : (
@@ -293,10 +293,10 @@ export default function FAQPage() {
           {/* Contact CTA */}
           <div className="mt-16 text-center bg-white rounded-2xl shadow-sm border border-wood/5 p-8">
             <h2 className="font-heading text-2xl font-bold text-wood mb-3">
-              Vous n&apos;avez pas trouv&eacute; votre r&eacute;ponse ?
+              Vous n&apos;avez pas trouvé votre réponse ?
             </h2>
             <p className="text-wood-light mb-6">
-              Notre &eacute;quipe est &agrave; votre disposition pour r&eacute;pondre &agrave; toutes
+              Notre équipe est à votre disposition pour répondre à toutes
               vos questions.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

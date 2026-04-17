@@ -1,38 +1,51 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Search, SlidersHorizontal, ChevronDown } from "lucide-react";
-import { categories, products } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import ProductCard from "@/components/ui/ProductCard";
+import type { Product, Category } from "@/types";
 
 type SortOption = "popularity" | "price-asc" | "price-desc" | "newest";
 type DietaryFilter = "vegetarian" | "vegan" | "halal" | "sans-gluten" | "";
 
 const sortOptions: { value: SortOption; label: string }[] = [
-  { value: "popularity", label: "Popularit\u00e9" },
+  { value: "popularity", label: "Popularité" },
   { value: "price-asc", label: "Prix croissant" },
-  { value: "price-desc", label: "Prix d\u00e9croissant" },
-  { value: "newest", label: "Nouveaut\u00e9s" },
+  { value: "price-desc", label: "Prix décroissant" },
+  { value: "newest", label: "Nouveautés" },
 ];
 
 const dietaryOptions: { value: DietaryFilter; label: string }[] = [
-  { value: "", label: "Tous les r\u00e9gimes" },
-  { value: "vegetarian", label: "V\u00e9g\u00e9tarien" },
-  { value: "vegan", label: "V\u00e9gan" },
+  { value: "", label: "Tous les régimes" },
+  { value: "vegetarian", label: "Végétarien" },
+  { value: "vegan", label: "Végan" },
   { value: "halal", label: "Halal" },
   { value: "sans-gluten", label: "Sans gluten" },
 ];
 
 export default function MenuPage() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [dietary, setDietary] = useState<DietaryFilter>("");
   const [sort, setSort] = useState<SortOption>("popularity");
   const [searchQuery, setSearchQuery] = useState("");
 
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/categories").then(r => r.json()),
+      fetch("/api/products").then(r => r.json()),
+    ]).then(([cats, prods]) => {
+      setCategories(cats);
+      setProducts(prods);
+    }).finally(() => setLoading(false));
+  }, []);
+
   const sortedCategories = useMemo(
     () => [...categories].sort((a, b) => a.order - b.order),
-    []
+    [categories]
   );
 
   const filteredProducts = useMemo(() => {
@@ -78,7 +91,23 @@ export default function MenuPage() {
     }
 
     return result;
-  }, [selectedCategory, dietary, sort, searchQuery]);
+  }, [selectedCategory, dietary, sort, searchQuery, products]);
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mb-8 text-center">
+          <div className="mx-auto h-8 w-48 animate-pulse rounded bg-gray-200" />
+          <div className="mx-auto mt-3 h-4 w-72 animate-pulse rounded bg-gray-100" />
+        </div>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="h-72 animate-pulse rounded-2xl bg-gray-100" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -88,7 +117,7 @@ export default function MenuPage() {
           Notre Carte
         </h1>
         <p className="mt-2 text-gray-500">
-          D&eacute;couvrez nos pizzas artisanales cuites au feu de bois et toutes nos sp&eacute;cialit&eacute;s
+          Découvrez nos pizzas artisanales cuites au feu de bois et toutes nos spécialités
         </p>
       </div>
 
@@ -185,7 +214,7 @@ export default function MenuPage() {
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <SlidersHorizontal className="mb-4 h-12 w-12 text-gray-300" />
           <h2 className="font-heading text-xl font-semibold text-wood">
-            Aucun produit trouv&eacute;
+            Aucun produit trouvé
           </h2>
           <p className="mt-2 max-w-md text-sm text-gray-500">
             Essayez de modifier vos filtres ou votre recherche pour trouver ce que vous cherchez.
@@ -200,7 +229,7 @@ export default function MenuPage() {
             }}
             className="mt-4 rounded-lg bg-primary px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-dark"
           >
-            R&eacute;initialiser les filtres
+            Réinitialiser les filtres
           </button>
         </div>
       )}

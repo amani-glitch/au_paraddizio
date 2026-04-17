@@ -67,20 +67,20 @@ const STATUS_CONFIG: Record<
   { label: string; bg: string; text: string }
 > = {
   PENDING: { label: "En attente", bg: "bg-yellow-100", text: "text-yellow-800" },
-  ACCEPTED: { label: "Acceptee", bg: "bg-blue-100", text: "text-blue-800" },
+  ACCEPTED: { label: "Acceptée", bg: "bg-blue-100", text: "text-blue-800" },
   PREPARING: {
-    label: "En preparation",
+    label: "En préparation",
     bg: "bg-orange-100",
     text: "text-orange-800",
   },
-  READY: { label: "Prete", bg: "bg-green-100", text: "text-green-800" },
+  READY: { label: "Prête", bg: "bg-green-100", text: "text-green-800" },
   DELIVERING: {
     label: "En livraison",
     bg: "bg-purple-100",
     text: "text-purple-800",
   },
-  DELIVERED: { label: "Livree", bg: "bg-gray-100", text: "text-gray-800" },
-  CANCELLED: { label: "Annulee", bg: "bg-red-100", text: "text-red-800" },
+  DELIVERED: { label: "Livrée", bg: "bg-gray-100", text: "text-gray-800" },
+  CANCELLED: { label: "Annulée", bg: "bg-red-100", text: "text-red-800" },
 };
 
 const MODE_CONFIG: Record<
@@ -94,7 +94,7 @@ const MODE_CONFIG: Record<
     icon: Truck,
   },
   TAKEAWAY: {
-    label: "A emporter",
+    label: "À emporter",
     bg: "bg-orange-100",
     text: "text-orange-700",
     icon: ShoppingBag,
@@ -110,18 +110,18 @@ const MODE_CONFIG: Record<
 const STATUS_FILTER_OPTIONS: { value: string; label: string }[] = [
   { value: "ALL", label: "Toutes" },
   { value: "PENDING", label: "En attente" },
-  { value: "ACCEPTED", label: "Acceptees" },
-  { value: "PREPARING", label: "En preparation" },
-  { value: "READY", label: "Pretes" },
+  { value: "ACCEPTED", label: "Acceptées" },
+  { value: "PREPARING", label: "En préparation" },
+  { value: "READY", label: "Prêtes" },
   { value: "DELIVERING", label: "En livraison" },
-  { value: "DELIVERED", label: "Livrees" },
-  { value: "CANCELLED", label: "Annulees" },
+  { value: "DELIVERED", label: "Livrées" },
+  { value: "CANCELLED", label: "Annulées" },
 ];
 
 const MODE_FILTER_OPTIONS: { value: string; label: string }[] = [
   { value: "ALL", label: "Tous" },
   { value: "DELIVERY", label: "Livraison" },
-  { value: "TAKEAWAY", label: "A emporter" },
+  { value: "TAKEAWAY", label: "À emporter" },
   { value: "DINE_IN", label: "Sur place" },
 ];
 
@@ -207,6 +207,9 @@ export default function CommandesPage() {
 
   useEffect(() => {
     fetchOrders();
+    // Auto-refresh every 15 seconds for real-time updates
+    const interval = setInterval(fetchOrders, 15000);
+    return () => clearInterval(interval);
   }, [fetchOrders]);
 
   // Derived data
@@ -267,14 +270,14 @@ export default function CommandesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
-      if (!res.ok) throw new Error("Erreur lors de la mise a jour du statut");
+      if (!res.ok) throw new Error("Erreur lors de la mise à jour du statut");
     } catch (err) {
       // Revert
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId ? { ...o, status: currentStatus } : o))
       );
       toast.error(
-        err instanceof Error ? err.message : "Impossible de mettre a jour le statut"
+        err instanceof Error ? err.message : "Impossible de mettre à jour le statut"
       );
     }
   }
@@ -331,7 +334,7 @@ export default function CommandesPage() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
               </span>
-              Temps reel
+              Temps réel
             </span>
           </div>
           <div className="flex items-center gap-3">
@@ -349,7 +352,7 @@ export default function CommandesPage() {
                   ? "bg-secondary/10 text-secondary hover:bg-secondary/20"
                   : "bg-gray-100 text-gray-400 hover:bg-gray-200"
               )}
-              title={soundEnabled ? "Desactiver le son" : "Activer le son"}
+              title={soundEnabled ? "Désactiver le son" : "Activer le son"}
             >
               {soundEnabled ? (
                 <Bell className="h-5 w-5" />
@@ -437,13 +440,13 @@ export default function CommandesPage() {
             </p>
           </div>
           <div className="rounded-xl border-l-4 border-l-orange-400 bg-white p-3 shadow-sm">
-            <p className="text-xs font-medium text-gray-500">En preparation</p>
+            <p className="text-xs font-medium text-gray-500">En préparation</p>
             <p className="mt-1 text-2xl font-bold text-orange-600">
               {stats.preparing}
             </p>
           </div>
           <div className="rounded-xl border-l-4 border-l-green-400 bg-white p-3 shadow-sm">
-            <p className="text-xs font-medium text-gray-500">Pretes</p>
+            <p className="text-xs font-medium text-gray-500">Prêtes</p>
             <p className="mt-1 text-2xl font-bold text-green-600">
               {stats.ready}
             </p>
@@ -607,7 +610,7 @@ export default function CommandesPage() {
                         className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-orange-600"
                       >
                         <ChefHat className="h-3.5 w-3.5" />
-                        En preparation
+                        En préparation
                       </button>
                     )}
                     {order.status === "PREPARING" && (
@@ -619,7 +622,7 @@ export default function CommandesPage() {
                         className="inline-flex items-center gap-1.5 rounded-lg bg-green-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-green-600"
                       >
                         <Check className="h-3.5 w-3.5" />
-                        Prete
+                        Prête
                       </button>
                     )}
                     {order.status === "READY" && order.mode === "DELIVERY" && (
@@ -643,7 +646,7 @@ export default function CommandesPage() {
                         className="inline-flex items-center gap-1.5 rounded-lg bg-green-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-green-600"
                       >
                         <Check className="h-3.5 w-3.5" />
-                        Recuperee
+                        Récupérée
                       </button>
                     )}
                     {order.status === "DELIVERING" && (
@@ -655,7 +658,7 @@ export default function CommandesPage() {
                         className="inline-flex items-center gap-1.5 rounded-lg bg-green-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-green-600"
                       >
                         <Check className="h-3.5 w-3.5" />
-                        Livree
+                        Livrée
                       </button>
                     )}
 
@@ -678,7 +681,7 @@ export default function CommandesPage() {
                       {/* Items list */}
                       <div>
                         <h3 className="mb-2 text-sm font-semibold text-wood">
-                          Articles commandes
+                          Articles commandés
                         </h3>
                         <div className="rounded-lg border border-gray-200 bg-white">
                           <table className="w-full text-sm">
@@ -765,7 +768,7 @@ export default function CommandesPage() {
                                   >
                                     <Copy className="h-3 w-3" />
                                     {copiedAddress === order.id
-                                      ? "Copie !"
+                                      ? "Copié !"
                                       : "Copier l'adresse"}
                                   </button>
                                 </div>
@@ -781,7 +784,7 @@ export default function CommandesPage() {
                           </h3>
                           <div className="rounded-lg border border-gray-200 bg-white p-3">
                             <div className="flex items-center justify-between text-sm">
-                              <span className="text-gray-500">Methode</span>
+                              <span className="text-gray-500">Méthode</span>
                               <span className="font-medium">
                                 Carte bancaire
                               </span>
@@ -790,7 +793,7 @@ export default function CommandesPage() {
                               <span className="text-gray-500">Statut</span>
                               <span className="inline-flex items-center gap-1 text-green-600 font-medium">
                                 <CircleDot className="h-3 w-3" />
-                                Paye
+                                Payé
                               </span>
                             </div>
                           </div>
@@ -819,7 +822,7 @@ export default function CommandesPage() {
                                   })()}
                                 </span>
                                 <span className="text-gray-700">
-                                  Commande recue
+                                  Commande reçue
                                 </span>
                               </div>
                               {order.status !== "PENDING" &&
@@ -827,7 +830,7 @@ export default function CommandesPage() {
                                   <div className="flex items-center gap-2 text-xs">
                                     <span className="h-2 w-2 rounded-full bg-blue-500" />
                                     <span className="text-gray-700">
-                                      Commande acceptee
+                                      Commande acceptée
                                     </span>
                                   </div>
                                 )}
@@ -838,7 +841,7 @@ export default function CommandesPage() {
                                 <div className="flex items-center gap-2 text-xs">
                                   <span className="h-2 w-2 rounded-full bg-orange-500" />
                                   <span className="text-gray-700">
-                                    Preparation lancee
+                                    Préparation lancée
                                   </span>
                                 </div>
                               )}
@@ -848,7 +851,7 @@ export default function CommandesPage() {
                                 <div className="flex items-center gap-2 text-xs">
                                   <span className="h-2 w-2 rounded-full bg-green-500" />
                                   <span className="text-gray-700">
-                                    Commande prete
+                                    Commande prête
                                   </span>
                                 </div>
                               )}
@@ -856,7 +859,7 @@ export default function CommandesPage() {
                                 <div className="flex items-center gap-2 text-xs">
                                   <span className="h-2 w-2 rounded-full bg-red-500" />
                                   <span className="text-gray-700">
-                                    Commande annulee
+                                    Commande annulée
                                   </span>
                                 </div>
                               )}

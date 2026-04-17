@@ -1,9 +1,19 @@
 import { NextResponse } from "next/server";
-import { storeInfo, deliveryZones } from "@/lib/data";
+import { getStoreSettings } from "@/lib/db/store";
 import { isStoreOpen } from "@/lib/utils";
 
 export async function GET() {
   try {
+    const settings = await getStoreSettings();
+
+    if (!settings) {
+      return NextResponse.json(
+        { error: "Store settings not found" },
+        { status: 404 }
+      );
+    }
+
+    const { storeInfo, deliveryZones } = settings;
     const isOpen = isStoreOpen(storeInfo.openingHours);
 
     return NextResponse.json({

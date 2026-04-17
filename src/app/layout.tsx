@@ -5,12 +5,13 @@ import Footer from "@/components/layout/Footer";
 import CartSidebar from "@/components/layout/CartSidebar";
 import MobileMenu from "@/components/layout/MobileMenu";
 import SearchOverlay from "@/components/layout/SearchOverlay";
+import BotWidget from "@/components/layout/BotWidget";
 import Providers from "@/components/providers/Providers";
 
 export const metadata: Metadata = {
   title: "Au Paradizzio Pizzas | Pizzeria artisanale à Entraigues-sur-la-Sorgue",
   description:
-    "Plus de 60 recettes de pizzas artisanales cuites au feu de bois. Commandez en ligne en livraison ou \u00E0 emporter. Pizzeria Au Paradizzio \u00E0 Entraigues-sur-la-Sorgue.",
+    "Plus de 60 recettes de pizzas artisanales cuites au feu de bois. Commandez en ligne en livraison ou à emporter. Pizzeria Au Paradizzio à Entraigues-sur-la-Sorgue.",
   keywords: [
     "pizza",
     "pizzeria",
@@ -44,6 +45,7 @@ export default function RootLayout({
           <CartSidebar />
           <MobileMenu />
           <SearchOverlay />
+          <BotWidget />
         </Providers>
       </body>
     </html>

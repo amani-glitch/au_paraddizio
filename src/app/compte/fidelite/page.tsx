@@ -68,7 +68,7 @@ const mockTransactions: LoyaltyTransaction[] = [
   {
     id: "lt-7",
     type: "redeemed",
-    description: "R\u00e9duction 5\u20ac",
+    description: "Réduction 5\u20ac",
     points: -100,
     date: "2026-03-10",
   },
@@ -85,13 +85,13 @@ const rewardTiers = [
   {
     points: 50,
     label: "Boisson offerte",
-    description: "Un soda ou eau min\u00e9rale au choix",
+    description: "Un soda ou eau minérale au choix",
     icon: Coffee,
     color: "text-blue-600 bg-blue-50",
   },
   {
     points: 100,
-    label: "5\u20ac de r\u00e9duction",
+    label: "5\u20ac de réduction",
     description: "Sur votre prochaine commande",
     icon: Gift,
     color: "text-accent bg-accent/10",
@@ -128,7 +128,7 @@ export default function FidelitePage() {
       <div className="flex items-center gap-3">
         <Award className="h-6 w-6 text-accent" />
         <h1 className="font-heading text-2xl font-bold text-wood">
-          Programme de fid&eacute;lit&eacute;
+          Programme de fidélité
         </h1>
       </div>
 
@@ -138,17 +138,17 @@ export default function FidelitePage() {
           <Star className="mb-2 h-8 w-8 text-accent" />
           <p className="text-sm font-medium text-white/80">Vos points</p>
           <p className="mt-1 text-5xl font-bold">{points}</p>
-          <p className="mt-1 text-sm text-white/60">points de fid&eacute;lit&eacute;</p>
+          <p className="mt-1 text-sm text-white/60">points de fidélité</p>
         </div>
 
         {/* Progress to next reward */}
         <div className="mt-6">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-white/80">Prochaine r&eacute;compense</span>
+            <span className="text-white/80">Prochaine récompense</span>
             <span className="font-medium">
               {nextReward.points > points
                 ? `${nextReward.points - points} pts restants`
-                : "R\u00e9compense disponible !"}
+                : "Récompense disponible !"}
             </span>
           </div>
           <div className="mt-2 h-3 overflow-hidden rounded-full bg-white/20">
@@ -158,7 +158,7 @@ export default function FidelitePage() {
             />
           </div>
           <p className="mt-2 text-center text-xs text-white/60">
-            {nextReward.label} &mdash; {nextReward.points} points
+            {nextReward.label} — {nextReward.points} points
           </p>
         </div>
       </div>
@@ -166,17 +166,17 @@ export default function FidelitePage() {
       {/* How it works */}
       <div className="rounded-2xl bg-white p-6 shadow-sm">
         <h2 className="mb-3 font-heading text-lg font-semibold text-wood">
-          Comment &ccedil;a marche ?
+          Comment ça marche ?
         </h2>
         <div className="flex items-start gap-3 rounded-lg bg-cream p-4">
           <TrendingUp className="mt-0.5 h-5 w-5 shrink-0 text-secondary" />
           <div>
             <p className="text-sm font-medium text-wood">
-              Gagnez 1 point par euro d&eacute;pens&eacute;
+              Gagnez 1 point par euro dépensé
             </p>
             <p className="mt-0.5 text-xs text-gray-500">
-              Les points sont automatiquement cr&eacute;dit&eacute;s apr&egrave;s chaque commande
-              livr&eacute;e. 100 points = 5&euro; de r&eacute;duction sur votre prochaine
+              Les points sont automatiquement crédités après chaque commande
+              livrée. 100 points = 5€ de réduction sur votre prochaine
               commande.
             </p>
           </div>
@@ -186,7 +186,7 @@ export default function FidelitePage() {
       {/* Reward tiers */}
       <div className="rounded-2xl bg-white p-6 shadow-sm">
         <h2 className="mb-4 font-heading text-lg font-semibold text-wood">
-          Paliers de r&eacute;compenses
+          Paliers de récompenses
         </h2>
         <div className="space-y-3">
           {rewardTiers.map((tier) => {
@@ -253,7 +253,7 @@ export default function FidelitePage() {
           <div className="mt-4 rounded-lg border border-accent/20 bg-accent/5 p-4">
             <p className="text-sm text-gray-700">
               Vos points seront automatiquement utilisables lors de votre prochaine
-              commande. Choisissez votre r&eacute;compense au moment du paiement.
+              commande. Choisissez votre récompense au moment du paiement.
             </p>
             {points >= 50 && (
               <p className="mt-2 text-sm font-medium text-secondary">
@@ -262,7 +262,7 @@ export default function FidelitePage() {
             )}
             {points < 50 && (
               <p className="mt-2 text-sm text-gray-500">
-                Il vous manque encore {50 - points} points pour votre premi&egrave;re r&eacute;compense.
+                Il vous manque encore {50 - points} points pour votre première récompense.
               </p>
             )}
           </div>

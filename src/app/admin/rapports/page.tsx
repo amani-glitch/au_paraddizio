@@ -182,7 +182,7 @@ export default function AdminReportsPage() {
             <div className="flex items-end justify-between gap-2" style={{ height: 200 }}>
               {weeklyRevenue.map((val, i) => (
                 <div key={i} className="flex flex-1 flex-col items-center gap-1">
-                  <span className="text-xs font-medium text-gray-600">{val}&euro;</span>
+                  <span className="text-xs font-medium text-gray-600">{val}€</span>
                   <div
                     className="w-full rounded-t-lg bg-gradient-to-t from-primary to-primary-light transition-all"
                     style={{ height: `${(val / maxWeekly) * 160}px` }}

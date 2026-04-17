@@ -10,7 +10,30 @@ export async function GET() {
     }
 
     const orders = await listOrders();
-    return NextResponse.json(orders);
+
+    // Transform to match admin dashboard format
+    const formatted = orders.map((o) => ({
+      id: o.id,
+      orderNumber: o.orderNumber,
+      customerName: o.customerName,
+      customerPhone: o.customerPhone,
+      mode: o.mode,
+      status: o.status,
+      items: (o.items ?? []).map((item) => ({
+        name: item.productName,
+        size: item.sizeName ?? "",
+        qty: item.quantity,
+        price: item.unitPrice,
+      })),
+      total: o.total,
+      address: o.deliveryAddress ?? undefined,
+      createdAt: o.createdAt,
+      paymentMethod: o.paymentMethod ?? "card",
+      paymentStatus: o.paymentStatus,
+      notes: o.notes,
+    }));
+
+    return NextResponse.json(formatted);
   } catch (error) {
     console.error("GET /api/admin/orders error:", error);
     return NextResponse.json([], { status: 500 });

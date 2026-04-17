@@ -33,8 +33,7 @@ import toast from "react-hot-toast";
 import { useCartStore } from "@/stores/cart-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { formatPrice, cn } from "@/lib/utils";
-import { storeInfo, deliveryZones } from "@/lib/data";
-import type { OrderMode } from "@/types";
+import type { OrderMode, StoreInfo, DeliveryZone } from "@/types";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -76,7 +75,7 @@ interface CardForm {
 // ─── Validation helpers ─────────────────────────────────────────────────────────
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_REGEX = /^(?:(?:\+33|0033|0)\s?[1-9])(?:[\s.-]?\d{2}){4}$/;
+const PHONE_REGEX = /^[0-9+\s().-]{6,20}$/;
 const POSTAL_REGEX = /^\d{5}$/;
 
 function isValidEmail(v: string) {
@@ -89,11 +88,9 @@ function isValidPostal(v: string) {
   return POSTAL_REGEX.test(v.trim());
 }
 
-// Get all valid delivery postal codes
-const DELIVERY_POSTAL_CODES = deliveryZones.flatMap((z) => z.postalCodes);
-
-function isInDeliveryZone(postalCode: string): boolean {
-  return DELIVERY_POSTAL_CODES.includes(postalCode.trim());
+function isInDeliveryZone(postalCode: string, zones: DeliveryZone[]): boolean {
+  const allCodes = zones.flatMap((z) => z.postalCodes);
+  return allCodes.includes(postalCode.trim());
 }
 
 // ─── Time slot generator ────────────────────────────────────────────────────────
@@ -237,6 +234,20 @@ export default function CheckoutPage() {
   const cart = useCartStore();
   const auth = useAuthStore();
 
+  const [storeInfo, setStoreInfo] = useState<StoreInfo | null>(null);
+  const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
+  const [storeLoading, setStoreLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/store")
+      .then(r => r.json())
+      .then((data) => {
+        setStoreInfo(data);
+        setDeliveryZones(data.deliveryZones ?? []);
+      })
+      .finally(() => setStoreLoading(false));
+  }, []);
+
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
@@ -330,7 +341,7 @@ export default function CheckoutPage() {
         errors.postalCode = "Code postal requis";
       } else if (!isValidPostal(deliveryForm.postalCode)) {
         errors.postalCode = "Code postal invalide";
-      } else if (!isInDeliveryZone(deliveryForm.postalCode)) {
+      } else if (!isInDeliveryZone(deliveryForm.postalCode, deliveryZones)) {
         errors.postalCode = "Hors zone de livraison";
       }
       if (!deliveryForm.city.trim()) errors.city = "Ville requise";
@@ -368,12 +379,12 @@ export default function CheckoutPage() {
     } else if (authTab === "register") {
       if (!registerForm.name.trim()) errors.registerName = "Nom requis";
       if (!isValidEmail(registerForm.email)) errors.registerEmail = "Email invalide";
-      if (!isValidPhone(registerForm.phone)) errors.registerPhone = "Num\u00e9ro de t\u00e9l\u00e9phone invalide";
-      if (registerForm.password.length < 6) errors.registerPassword = "6 caract\u00e8res minimum";
+      if (!isValidPhone(registerForm.phone)) errors.registerPhone = "Numéro de téléphone invalide";
+      if (registerForm.password.length < 6) errors.registerPassword = "6 caractères minimum";
     } else {
       if (!guestInfo.name.trim()) errors.guestName = "Nom requis";
       if (!isValidEmail(guestInfo.email)) errors.guestEmail = "Email invalide";
-      if (!isValidPhone(guestInfo.phone)) errors.guestPhone = "Num\u00e9ro de t\u00e9l\u00e9phone invalide";
+      if (!isValidPhone(guestInfo.phone)) errors.guestPhone = "Numéro de téléphone invalide";
     }
 
     setStep3Errors(errors);
@@ -413,7 +424,7 @@ export default function CheckoutPage() {
     const errors: Record<string, string> = {};
 
     if (paymentMethod === "card") {
-      if (cardForm.number.replace(/\s/g, "").length < 16) errors.cardNumber = "Num\u00e9ro de carte invalide";
+      if (cardForm.number.replace(/\s/g, "").length < 16) errors.cardNumber = "Numéro de carte invalide";
       if (!/^\d{2}\s?\/\s?\d{2}$/.test(cardForm.expiry.trim())) errors.cardExpiry = "Date invalide (MM/AA)";
       if (cardForm.cvc.length < 3) errors.cardCvc = "CVC invalide";
       if (!cardForm.name.trim()) errors.cardName = "Nom sur la carte requis";
@@ -485,7 +496,8 @@ export default function CheckoutPage() {
             }
           : undefined;
 
-      const res = await fetch("/api/orders", {
+      // Use the checkout API which handles both Stripe and cash payments
+      const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -504,14 +516,22 @@ export default function CheckoutPage() {
         throw new Error(data.error || `Erreur ${res.status}`);
       }
 
-      const order = await res.json();
+      const result = await res.json();
 
-      setOrderNumber(order.orderNumber);
+      // For card payments, redirect to Stripe Checkout
+      if (result.checkoutUrl) {
+        cart.clearCart();
+        window.location.href = result.checkoutUrl;
+        return;
+      }
+
+      // For cash/on-site payments, show confirmation directly
+      setOrderNumber(result.orderNumber);
       setOrderPlacedAt(new Date());
       setIsProcessing(false);
       goNext();
       cart.clearCart();
-      toast.success("Commande confirmee !");
+      toast.success("Commande confirmée !");
     } catch (error) {
       setIsProcessing(false);
       const message = error instanceof Error ? error.message : "Une erreur est survenue";
@@ -538,9 +558,9 @@ export default function CheckoutPage() {
     }
     if (selectedMode === "TAKEAWAY") {
       if (pickupTime === "asap") return "environ 20 minutes";
-      return `\u00e0 ${pickupTime}`;
+      return `à ${pickupTime}`;
     }
-    return "d\u00e8s votre arriv\u00e9e";
+    return "dès votre arrivée";
   };
 
   // ─── Format card number with spaces ───────────────────────────────────────────
@@ -603,10 +623,10 @@ export default function CheckoutPage() {
               <div>
                 <div className="text-center mb-8">
                   <h2 className="font-heading text-2xl sm:text-3xl font-bold text-wood mb-2">
-                    Comment souhaitez-vous r\u00e9cup\u00e9rer votre commande ?
+                    Comment souhaitez-vous récupérer votre commande ?
                   </h2>
                   <p className="text-wood-light">
-                    Choisissez votre mode de retrait pr\u00e9f\u00e9r\u00e9
+                    Choisissez votre mode de retrait préféré
                   </p>
                 </div>
 
@@ -676,9 +696,9 @@ export default function CheckoutPage() {
                         )}
                       />
                     </div>
-                    <h3 className="font-heading font-bold text-wood text-lg mb-1">\u00c0 emporter</h3>
+                    <h3 className="font-heading font-bold text-wood text-lg mb-1">À emporter</h3>
                     <p className="text-sm text-wood-light mb-3">
-                      R\u00e9cup\u00e9rez votre commande au restaurant
+                      Récupérez votre commande au restaurant
                     </p>
                     <span className="text-xs font-medium text-secondary bg-secondary/10 px-3 py-1 rounded-full">
                       Gratuit
@@ -747,7 +767,7 @@ export default function CheckoutPage() {
                       ? "Adresse de livraison"
                       : selectedMode === "TAKEAWAY"
                       ? "Retrait au restaurant"
-                      : "R\u00e9servation sur place"}
+                      : "Réservation sur place"}
                   </h2>
                 </div>
 
@@ -768,7 +788,7 @@ export default function CheckoutPage() {
                               setDeliveryForm({ ...deliveryForm, street: e.target.value });
                               setStep2Errors((prev) => ({ ...prev, street: "" }));
                             }}
-                            placeholder="123 Avenue de la Libert\u00e9"
+                            placeholder="123 Avenue de la Liberté"
                             className={cn(
                               "w-full px-4 py-3 rounded-xl border bg-cream/50 text-wood placeholder:text-wood/30 focus:outline-none focus:ring-2 transition-all",
                               step2Errors.street
@@ -787,7 +807,7 @@ export default function CheckoutPage() {
                         {/* Complement */}
                         <div>
                           <label className="block text-sm font-semibold text-wood mb-1.5">
-                            Compl\u00e9ment d&apos;adresse
+                            Complément d&apos;adresse
                           </label>
                           <input
                             type="text"
@@ -795,7 +815,7 @@ export default function CheckoutPage() {
                             onChange={(e) =>
                               setDeliveryForm({ ...deliveryForm, complement: e.target.value })
                             }
-                            placeholder="B\u00e2timent, \u00e9tage, appartement..."
+                            placeholder="Bâtiment, étage, appartement..."
                             className="w-full px-4 py-3 rounded-xl border border-wood/15 bg-cream/50 text-wood placeholder:text-wood/30 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all"
                           />
                         </div>
@@ -872,7 +892,7 @@ export default function CheckoutPage() {
                               setDeliveryForm({ ...deliveryForm, instructions: e.target.value })
                             }
                             rows={3}
-                            placeholder="Code porte, \u00e9tage, digicode, sonnez chez..."
+                            placeholder="Code porte, étage, digicode, sonnez chez..."
                             className="w-full px-4 py-3 rounded-xl border border-wood/15 bg-cream/50 text-wood placeholder:text-wood/30 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all resize-none"
                           />
                         </div>
@@ -886,7 +906,7 @@ export default function CheckoutPage() {
                             Frais de livraison : {formatPrice(cart.deliveryFee())}
                           </span>
                           <span className="text-wood-light ml-2">
-                            &middot; Estim\u00e9 {getEstimatedTime()}
+                            &middot; Estimé {getEstimatedTime()}
                           </span>
                         </div>
                       </div>
@@ -913,13 +933,13 @@ export default function CheckoutPage() {
                           <h3 className="font-heading font-semibold text-wood mb-1">
                             Adresse de retrait
                           </h3>
-                          <p className="text-wood-light text-sm">{storeInfo.address}</p>
+                          <p className="text-wood-light text-sm">{storeInfo?.address}</p>
                           <a
-                            href={`tel:${storeInfo.phone.replace(/\s/g, "")}`}
+                            href={`tel:${storeInfo?.phone.replace(/\s/g, "") ?? ""}`}
                             className="text-primary text-sm font-medium mt-1 inline-flex items-center gap-1 hover:text-primary-dark transition-colors"
                           >
                             <Phone className="w-3.5 h-3.5" />
-                            {storeInfo.phone}
+                            {storeInfo?.phone}
                           </a>
                         </div>
                       </div>
@@ -959,7 +979,7 @@ export default function CheckoutPage() {
                             </div>
                             <div>
                               <span className="font-semibold text-wood">
-                                D\u00e8s que possible
+                                Dès que possible
                               </span>
                               <span className="text-sm text-wood-light ml-2">(environ 20 min)</span>
                             </div>
@@ -992,7 +1012,7 @@ export default function CheckoutPage() {
                                   <div className="w-2.5 h-2.5 rounded-full bg-primary" />
                                 )}
                               </div>
-                              <span className="font-semibold text-wood">Choisir un cr\u00e9neau</span>
+                              <span className="font-semibold text-wood">Choisir un créneau</span>
                             </label>
 
                             {pickupTime !== "asap" && (
@@ -1013,7 +1033,7 @@ export default function CheckoutPage() {
                                 ))}
                                 {timeSlots.length === 0 && (
                                   <p className="col-span-full text-sm text-wood-light italic">
-                                    Aucun cr\u00e9neau disponible pour aujourd&apos;hui
+                                    Aucun créneau disponible pour aujourd&apos;hui
                                   </p>
                                 )}
                               </div>
@@ -1034,9 +1054,9 @@ export default function CheckoutPage() {
                         </div>
                         <div>
                           <h3 className="font-heading font-semibold text-wood mb-1">
-                            Veuillez vous pr\u00e9senter au restaurant
+                            Veuillez vous présenter au restaurant
                           </h3>
-                          <p className="text-wood-light text-sm">{storeInfo.address}</p>
+                          <p className="text-wood-light text-sm">{storeInfo?.address}</p>
                         </div>
                       </div>
 
@@ -1098,10 +1118,10 @@ export default function CheckoutPage() {
               <div>
                 <div className="text-center mb-8">
                   <h2 className="font-heading text-2xl sm:text-3xl font-bold text-wood mb-2">
-                    Vos coordonn\u00e9es
+                    Vos coordonnées
                   </h2>
                   <p className="text-wood-light">
-                    Identifiez-vous ou commandez en tant qu&apos;invit\u00e9
+                    Identifiez-vous ou commandez en tant qu&apos;invité
                   </p>
                 </div>
 
@@ -1110,9 +1130,9 @@ export default function CheckoutPage() {
                   <div className="flex rounded-xl bg-white border border-wood/10 p-1 mb-6 shadow-sm">
                     {(
                       [
-                        { key: "guest", label: "Commander en invit\u00e9" },
+                        { key: "guest", label: "Commander en invité" },
                         { key: "login", label: "Se connecter" },
-                        { key: "register", label: "Cr\u00e9er un compte" },
+                        { key: "register", label: "Créer un compte" },
                       ] as const
                     ).map(({ key, label }) => (
                       <button
@@ -1140,7 +1160,7 @@ export default function CheckoutPage() {
                         <div className="flex items-center gap-2 mb-2 p-3 rounded-lg bg-accent/5 border border-accent/10">
                           <ShieldCheck className="w-5 h-5 text-accent flex-shrink-0" />
                           <p className="text-sm text-wood-light">
-                            Pas besoin de compte ! Renseignez simplement vos coordonn\u00e9es.
+                            Pas besoin de compte ! Renseignez simplement vos coordonnées.
                           </p>
                         </div>
 
@@ -1206,7 +1226,7 @@ export default function CheckoutPage() {
 
                         <div>
                           <label className="block text-sm font-semibold text-wood mb-1.5">
-                            T\u00e9l\u00e9phone <span className="text-primary">*</span>
+                            Téléphone <span className="text-primary">*</span>
                           </label>
                           <div className="relative">
                             <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-wood/30" />
@@ -1282,7 +1302,7 @@ export default function CheckoutPage() {
                                 setLoginForm({ ...loginForm, password: e.target.value });
                                 setStep3Errors((prev) => ({ ...prev, loginPassword: "" }));
                               }}
-                              placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+                              placeholder="••••••••"
                               className={cn(
                                 "w-full pl-11 pr-12 py-3 rounded-xl border bg-cream/50 text-wood placeholder:text-wood/30 focus:outline-none focus:ring-2 transition-all",
                                 step3Errors.loginPassword
@@ -1311,7 +1331,7 @@ export default function CheckoutPage() {
                         </div>
 
                         <button className="text-sm text-primary hover:text-primary-dark font-medium transition-colors">
-                          Mot de passe oubli\u00e9 ?
+                          Mot de passe oublié ?
                         </button>
                       </div>
                     )}
@@ -1381,7 +1401,7 @@ export default function CheckoutPage() {
 
                         <div>
                           <label className="block text-sm font-semibold text-wood mb-1.5">
-                            T\u00e9l\u00e9phone <span className="text-primary">*</span>
+                            Téléphone <span className="text-primary">*</span>
                           </label>
                           <div className="relative">
                             <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-wood/30" />
@@ -1422,7 +1442,7 @@ export default function CheckoutPage() {
                                 setRegisterForm({ ...registerForm, password: e.target.value });
                                 setStep3Errors((prev) => ({ ...prev, registerPassword: "" }));
                               }}
-                              placeholder="6 caract\u00e8res minimum"
+                              placeholder="6 caractères minimum"
                               className={cn(
                                 "w-full pl-11 pr-12 py-3 rounded-xl border bg-cream/50 text-wood placeholder:text-wood/30 focus:outline-none focus:ring-2 transition-all",
                                 step3Errors.registerPassword
@@ -1484,7 +1504,7 @@ export default function CheckoutPage() {
                     Paiement
                   </h2>
                   <p className="text-wood-light">
-                    V\u00e9rifiez votre commande et choisissez votre mode de paiement
+                    Vérifiez votre commande et choisissez votre mode de paiement
                   </p>
                 </div>
 
@@ -1570,8 +1590,8 @@ export default function CheckoutPage() {
                             <div className="ml-8 p-3 rounded-lg bg-accent/5 border border-accent/10">
                               <p className="text-xs text-wood-light flex items-center gap-1.5">
                                 <AlertCircle className="w-3.5 h-3.5 text-accent flex-shrink-0" />
-                                Plafond journalier de 25,00 \u20ac par titre-restaurant. Le compl\u00e9ment
-                                sera \u00e0 r\u00e9gler par un autre moyen de paiement.
+                                Plafond journalier de 25,00 \u20ac par titre-restaurant. Le complément
+                                sera à régler par un autre moyen de paiement.
                               </p>
                             </div>
                           )}
@@ -1638,11 +1658,11 @@ export default function CheckoutPage() {
                             <div className="flex-1">
                               <span className="font-semibold text-wood">
                                 {selectedMode === "DELIVERY"
-                                  ? "Paiement \u00e0 la livraison"
+                                  ? "Paiement à la livraison"
                                   : "Paiement au retrait"}
                               </span>
                               <span className="text-xs text-wood-light block">
-                                Esp\u00e8ces ou CB
+                                Espèces ou CB
                               </span>
                             </div>
                           </label>
@@ -1660,7 +1680,7 @@ export default function CheckoutPage() {
                           <div className="space-y-4">
                             <div>
                               <label className="block text-sm font-semibold text-wood mb-1.5">
-                                Num\u00e9ro de carte <span className="text-primary">*</span>
+                                Numéro de carte <span className="text-primary">*</span>
                               </label>
                               <div className="relative">
                                 <CreditCard className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-wood/30" />
@@ -1782,7 +1802,7 @@ export default function CheckoutPage() {
 
                           <div className="mt-4 flex items-center gap-2 text-xs text-wood-light">
                             <Lock className="w-3.5 h-3.5 text-secondary" />
-                            Paiement s\u00e9curis\u00e9 par chiffrement SSL
+                            Paiement sécurisé par chiffrement SSL
                           </div>
                         </div>
                       )}
@@ -1816,11 +1836,11 @@ export default function CheckoutPage() {
                           <span className="text-sm text-wood-light leading-relaxed">
                             J&apos;accepte les{" "}
                             <button className="text-primary hover:text-primary-dark font-medium underline">
-                              conditions g\u00e9n\u00e9rales de vente
+                              conditions générales de vente
                             </button>{" "}
                             et la{" "}
                             <button className="text-primary hover:text-primary-dark font-medium underline">
-                              politique de confidentialit\u00e9
+                              politique de confidentialité
                             </button>
                           </span>
                         </label>
@@ -1838,7 +1858,7 @@ export default function CheckoutPage() {
                       <div className="bg-white rounded-2xl p-6 shadow-sm border border-wood/5 sticky top-32">
                         <h3 className="font-heading font-semibold text-wood mb-4 flex items-center gap-2">
                           <Package className="w-5 h-5 text-accent" />
-                          R\u00e9capitulatif
+                          Récapitulatif
                         </h3>
 
                         {/* Items */}
@@ -1892,7 +1912,7 @@ export default function CheckoutPage() {
                           )}
                           {cart.discount() > 0 && (
                             <div className="flex justify-between text-sm">
-                              <span className="text-secondary">R\u00e9duction</span>
+                              <span className="text-secondary">Réduction</span>
                               <span className="text-secondary font-medium">
                                 -{formatPrice(cart.discount())}
                               </span>
@@ -1916,9 +1936,9 @@ export default function CheckoutPage() {
                             {selectedMode === "DINE_IN" && <UtensilsCrossed className="w-3.5 h-3.5" />}
                             <span>
                               {selectedMode === "DELIVERY" && "Livraison"}
-                              {selectedMode === "TAKEAWAY" && "\u00c0 emporter"}
+                              {selectedMode === "TAKEAWAY" && "À emporter"}
                               {selectedMode === "DINE_IN" && "Sur place"}
-                              {" \u2014 "}
+                              {" — "}
                               {getEstimatedTime()}
                             </span>
                           </div>
@@ -2009,7 +2029,7 @@ export default function CheckoutPage() {
                   transition={{ delay: 0.4 }}
                 >
                   <h2 className="font-heading text-3xl sm:text-4xl font-bold text-wood mb-3">
-                    Commande confirm\u00e9e !
+                    Commande confirmée !
                   </h2>
                   <p className="text-wood-light text-lg mb-8">
                     Merci pour votre commande chez Au Paradizzio
@@ -2027,12 +2047,12 @@ export default function CheckoutPage() {
                   <div className="flex items-center justify-between mb-6 pb-4 border-b border-wood/10">
                     <div>
                       <p className="text-xs text-wood-light uppercase tracking-wide font-medium mb-1">
-                        Num\u00e9ro de commande
+                        Numéro de commande
                       </p>
                       <p className="font-heading font-bold text-wood text-xl">{orderNumber}</p>
                     </div>
                     <div className="px-3 py-1.5 rounded-full bg-secondary/10 text-secondary text-sm font-semibold">
-                      Confirm\u00e9e
+                      Confirmée
                     </div>
                   </div>
 
@@ -2044,10 +2064,10 @@ export default function CheckoutPage() {
                     <div className="text-sm">
                       <span className="font-semibold text-wood">
                         {selectedMode === "DELIVERY" && "Livraison"}
-                        {selectedMode === "TAKEAWAY" && "\u00c0 emporter"}
+                        {selectedMode === "TAKEAWAY" && "À emporter"}
                         {selectedMode === "DINE_IN" && "Sur place"}
                       </span>
-                      <span className="text-wood-light ml-2">&mdash; {getEstimatedTime()}</span>
+                      <span className="text-wood-light ml-2">— {getEstimatedTime()}</span>
                     </div>
                   </div>
 
@@ -2055,7 +2075,7 @@ export default function CheckoutPage() {
                   <div className="flex items-center gap-3 p-3 rounded-xl bg-accent/5 border border-accent/10">
                     <Mail className="w-5 h-5 text-accent flex-shrink-0" />
                     <p className="text-sm text-wood-light">
-                      Un email de confirmation vous sera envoy\u00e9 \u00e0{" "}
+                      Un email de confirmation vous sera envoyé à{" "}
                       <strong className="text-wood">{getUserEmail()}</strong>
                     </p>
                   </div>
@@ -2080,7 +2100,7 @@ export default function CheckoutPage() {
                     className="inline-flex items-center gap-2 text-wood hover:text-primary font-semibold px-6 py-3 rounded-full border-2 border-wood/15 hover:border-primary/30 transition-all"
                   >
                     <Home className="w-4 h-4" />
-                    Retour \u00e0 l&apos;accueil
+                    Retour à l&apos;accueil
                   </Link>
                 </motion.div>
               </div>

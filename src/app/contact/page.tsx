@@ -69,9 +69,9 @@ export default function ContactPage() {
             Contactez-nous
           </h1>
           <p className="text-lg text-cream/80 max-w-2xl mx-auto">
-            Une question, une r&eacute;servation ou une suggestion ? N&apos;h&eacute;sitez pas
-            &agrave; nous &eacute;crire, nous vous r&eacute;pondrons dans les plus brefs
-            d&eacute;lais.
+            Une question, une réservation ou une suggestion ? N&apos;hésitez pas
+            à nous écrire, nous vous répondrons dans les plus brefs
+            délais.
           </p>
         </div>
       </section>
@@ -91,11 +91,11 @@ export default function ContactPage() {
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     <CheckCircle className="w-16 h-16 text-secondary mb-4" />
                     <h3 className="font-heading text-xl font-bold text-wood mb-2">
-                      Message envoy&eacute; !
+                      Message envoyé !
                     </h3>
                     <p className="text-wood-light">
-                      Merci pour votre message. Nous vous r&eacute;pondrons dans les
-                      plus brefs d&eacute;lais.
+                      Merci pour votre message. Nous vous répondrons dans les
+                      plus brefs délais.
                     </p>
                   </div>
                 ) : (
@@ -146,7 +146,7 @@ export default function ContactPage() {
                         htmlFor="phone"
                         className="block text-sm font-semibold text-wood mb-1.5"
                       >
-                        T&eacute;l&eacute;phone{" "}
+                        Téléphone{" "}
                         <span className="text-wood-light font-normal">
                           (optionnel)
                         </span>
@@ -242,7 +242,7 @@ export default function ContactPage() {
               {/* Coordonnées */}
               <div className="bg-white rounded-2xl shadow-sm border border-wood/5 p-6">
                 <h2 className="font-heading text-xl font-bold text-wood mb-5">
-                  Nos coordonn&eacute;es
+                  Nos coordonnées
                 </h2>
 
                 {/* Address */}
@@ -269,7 +269,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-wood text-sm mb-0.5">
-                      T&eacute;l&eacute;phone
+                      Téléphone
                     </h3>
                     <a
                       href="tel:0490481860"
@@ -320,7 +320,7 @@ export default function ContactPage() {
                         <td className="py-2 text-right">
                           {h.hours === "Fermé" ? (
                             <span className="text-primary font-medium">
-                              Ferm&eacute;
+                              Fermé
                             </span>
                           ) : (
                             <span className="text-wood-light">{h.hours}</span>

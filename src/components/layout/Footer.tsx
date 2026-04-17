@@ -8,14 +8,14 @@ import { useState } from "react";
 const navLinks = [
   { href: "/menu", label: "Menu" },
   { href: "/promotions", label: "Promotions" },
-  { href: "/a-propos", label: "\u00C0 propos" },
+  { href: "/a-propos", label: "À propos" },
   { href: "/contact", label: "Contact" },
 ];
 
 const legalLinks = [
   { href: "/cgv", label: "CGV" },
-  { href: "/mentions-legales", label: "Mentions l\u00E9gales" },
-  { href: "/politique-de-confidentialite", label: "Politique de confidentialit\u00E9" },
+  { href: "/mentions-legales", label: "Mentions légales" },
+  { href: "/politique-de-confidentialite", label: "Politique de confidentialité" },
   { href: "/faq", label: "FAQ" },
 ];
 
@@ -46,7 +46,7 @@ export default function Footer() {
             </Link>
             <p className="text-sm leading-relaxed text-cream/80">
               Pizzeria artisanale au feu de bois depuis 1995. Plus de 60
-              recettes maison pr&eacute;par&eacute;es avec des ingr&eacute;dients frais et de qualit&eacute;.
+              recettes maison préparées avec des ingrédients frais et de qualité.
             </p>
             <div className="flex items-center gap-3">
               <a
@@ -140,7 +140,7 @@ export default function Footer() {
                   <br />
                   Dim : 17h30 - 21h30
                   <br />
-                  Lundi : Ferm&eacute;
+                  Lundi : Fermé
                 </span>
               </li>
             </ul>
@@ -151,11 +151,11 @@ export default function Footer() {
         <div className="mt-12 border-t border-white/10 pt-8">
           <div className="mx-auto max-w-md text-center">
             <h3 className="mb-2 font-heading text-lg font-semibold text-white">
-              Restez inform&eacute;
+              Restez informé
             </h3>
             <p className="mb-4 text-sm text-cream/70">
-              Recevez nos offres sp&eacute;ciales et nouveaut&eacute;s directement dans votre
-              bo&icirc;te mail.
+              Recevez nos offres spéciales et nouveautés directement dans votre
+              boîte mail.
             </p>
             {subscribed ? (
               <p className="text-sm font-medium text-accent">
@@ -191,7 +191,7 @@ export default function Footer() {
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           <p className="text-center text-xs text-cream/60">
             &copy; 2024 Au Paradizzio Pizzas - SARL BALDO. Tous droits
-            r&eacute;serv&eacute;s.
+            réservés.
           </p>
         </div>
       </div>

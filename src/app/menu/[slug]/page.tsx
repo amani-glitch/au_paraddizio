@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo, use } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import {
   ChevronRight,
   ShoppingCart,
@@ -12,12 +12,11 @@ import {
   ChevronUp,
   Info,
 } from "lucide-react";
-import { getProductBySlug, products, categories } from "@/lib/data";
 import { useCartStore } from "@/stores/cart-store";
 import { formatPrice, cn } from "@/lib/utils";
 import Badge from "@/components/ui/Badge";
 import ProductCard from "@/components/ui/ProductCard";
-import type { Product, ProductSupplement } from "@/types";
+import type { Product, ProductSupplement, Category } from "@/types";
 
 function getCategoryEmoji(categoryId: string): string {
   switch (categoryId) {
@@ -45,19 +44,19 @@ const allergenLabels: Record<string, string> = {
   poisson: "Poisson",
   arachide: "Arachide",
   soja: "Soja",
-  "fruits-a-coque": "Fruits \u00e0 coque",
-  celeri: "C\u00e9leri",
+  "fruits-a-coque": "Fruits à coque",
+  celeri: "Céleri",
   moutarde: "Moutarde",
-  sesame: "S\u00e9same",
+  sesame: "Sésame",
   sulfites: "Sulfites",
   lupin: "Lupin",
   mollusques: "Mollusques",
-  crustaces: "Crustac\u00e9s",
+  crustaces: "Crustacés",
 };
 
 const dietaryLabels: Record<string, string> = {
-  vegetarian: "V\u00e9g\u00e9tarien",
-  vegan: "V\u00e9gan",
+  vegetarian: "Végétarien",
+  vegan: "Végan",
   halal: "Halal",
   "sans-gluten": "Sans gluten",
 };
@@ -75,15 +74,16 @@ const removableIngredients: Record<string, string[]> = {
   ],
 };
 
-export default function ProductDetailPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = use(params);
+export default function ProductDetailPage() {
+  const params = useParams();
+  const slug = typeof params.slug === "string" ? params.slug : Array.isArray(params.slug) ? params.slug[0] : "";
   const router = useRouter();
-  const product = getProductBySlug(slug);
   const addItem = useCartStore((state) => state.addItem);
+
+  const [product, setProduct] = useState<Product | null>(null);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
+  const [pageLoading, setPageLoading] = useState(true);
 
   const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
   const [selectedSupplements, setSelectedSupplements] = useState<
@@ -96,7 +96,99 @@ export default function ProductDetailPage({
   const [halfHalfEnabled, setHalfHalfEnabled] = useState(false);
   const [halfHalfProductId, setHalfHalfProductId] = useState<string>("");
 
-  if (!product) {
+  useEffect(() => {
+    if (!slug) return;
+    setPageLoading(true);
+    Promise.all([
+      fetch(`/api/products/${encodeURIComponent(slug)}`).then(r => r.ok ? r.json() : null),
+      fetch("/api/products").then(r => r.json()).catch(() => []),
+      fetch("/api/categories").then(r => r.json()).catch(() => []),
+    ]).then(([prod, prods, cats]) => {
+      setProduct(prod);
+      setAllProducts(prods);
+      setAllCategories(cats);
+    }).finally(() => setPageLoading(false));
+  }, [slug]);
+
+  // ALL hooks MUST be called before any conditional return (React rules of hooks)
+  const sizes = product?.sizes ?? [];
+  const supplements = product?.supplements ?? [];
+  const allergens = product?.allergens ?? [];
+  const dietary = product?.dietary ?? [];
+  const selectedSize = sizes[selectedSizeIndex] ?? sizes[0];
+  const isPizza = product?.categoryId === "cat-pizzas";
+
+  const supplementsByCategory = useMemo(() => {
+    const grouped: Record<string, ProductSupplement[]> = {};
+    supplements.forEach((sup) => {
+      const cat = sup.category === "base" ? "Base" : "Garnitures";
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(sup);
+    });
+    return grouped;
+  }, [supplements]);
+
+  const halfHalfOptions = useMemo(
+    () =>
+      product
+        ? allProducts.filter(
+            (p) =>
+              p.categoryId === "cat-pizzas" &&
+              p.isActive &&
+              p.id !== product.id
+          )
+        : [],
+    [product, allProducts]
+  );
+
+  const crossSellProducts = useMemo(() => {
+    if (!product || !allProducts.length) return [];
+    const otherProducts = allProducts.filter(
+      (p) => p.id !== product.id && p.isActive
+    );
+    const byCat: Record<string, Product[]> = {};
+    otherProducts.forEach((p) => {
+      if (!byCat[p.categoryId]) byCat[p.categoryId] = [];
+      byCat[p.categoryId].push(p);
+    });
+    const picks: Product[] = [];
+    const catKeys = Object.keys(byCat);
+    for (const key of catKeys) {
+      if (picks.length >= 3) break;
+      picks.push(byCat[key][0]);
+    }
+    for (const p of otherProducts) {
+      if (picks.length >= 3) break;
+      if (!picks.find((x) => x.id === p.id)) {
+        picks.push(p);
+      }
+    }
+    return picks.slice(0, 3);
+  }, [product, allProducts]);
+
+  const halfHalfProduct = halfHalfEnabled
+    ? allProducts.find((p) => p.id === halfHalfProductId)
+    : undefined;
+
+  const supplementsTotal = selectedSupplements.reduce(
+    (sum, s) => sum + s.price,
+    0
+  );
+  const unitPrice = (selectedSize?.price ?? 0) + supplementsTotal;
+  const totalPrice = unitPrice * quantity;
+
+  const category = allCategories.find((c) => c.id === product?.categoryId);
+
+  // NOW we can do conditional returns (after all hooks)
+  if (pageLoading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-20 text-center sm:px-6 lg:px-8">
+        <div className="h-8 w-8 mx-auto animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!product || sizes.length === 0) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-20 text-center sm:px-6 lg:px-8">
         <h1 className="font-heading text-2xl font-bold text-wood">
@@ -114,44 +206,6 @@ export default function ProductDetailPage({
       </div>
     );
   }
-
-  const selectedSize = product.sizes[selectedSizeIndex];
-  const isPizza = product.categoryId === "cat-pizzas";
-
-  // Group supplements by category
-  const supplementsByCategory = useMemo(() => {
-    const grouped: Record<string, ProductSupplement[]> = {};
-    product.supplements.forEach((sup) => {
-      const cat = sup.category === "base" ? "Base" : "Garnitures";
-      if (!grouped[cat]) grouped[cat] = [];
-      grouped[cat].push(sup);
-    });
-    return grouped;
-  }, [product.supplements]);
-
-  // Available pizzas for half & half
-  const halfHalfOptions = useMemo(
-    () =>
-      products.filter(
-        (p) =>
-          p.categoryId === "cat-pizzas" &&
-          p.isActive &&
-          p.id !== product.id
-      ),
-    [product.id]
-  );
-
-  const halfHalfProduct = halfHalfEnabled
-    ? products.find((p) => p.id === halfHalfProductId)
-    : undefined;
-
-  // Calculate total
-  const supplementsTotal = selectedSupplements.reduce(
-    (sum, s) => sum + s.price,
-    0
-  );
-  const unitPrice = selectedSize.price + supplementsTotal;
-  const totalPrice = unitPrice * quantity;
 
   const handleToggleSupplement = (supplement: ProductSupplement) => {
     setSelectedSupplements((prev) => {
@@ -173,7 +227,7 @@ export default function ProductDetailPage({
 
   const handleAddToCart = () => {
     const halfHalf =
-      halfHalfEnabled && halfHalfProduct
+      halfHalfEnabled && halfHalfProduct && halfHalfProduct.sizes?.length > 0
         ? {
             product: halfHalfProduct,
             size: halfHalfProduct.sizes[0],
@@ -193,37 +247,6 @@ export default function ProductDetailPage({
 
     router.push("/menu");
   };
-
-  // Cross-sell: 3 random products from different categories
-  const crossSellProducts = useMemo(() => {
-    const otherProducts = products.filter(
-      (p) => p.id !== product.id && p.isActive
-    );
-    const byCat: Record<string, Product[]> = {};
-    otherProducts.forEach((p) => {
-      if (!byCat[p.categoryId]) byCat[p.categoryId] = [];
-      byCat[p.categoryId].push(p);
-    });
-    const picks: Product[] = [];
-    const catKeys = Object.keys(byCat);
-    for (const key of catKeys) {
-      if (picks.length >= 3) break;
-      const arr = byCat[key];
-      const randomIndex = Math.floor(Math.random() * arr.length);
-      picks.push(arr[randomIndex]);
-    }
-    // Fill up to 3 if needed
-    while (picks.length < 3 && otherProducts.length > picks.length) {
-      const candidate =
-        otherProducts[Math.floor(Math.random() * otherProducts.length)];
-      if (!picks.find((p) => p.id === candidate.id)) {
-        picks.push(candidate);
-      }
-    }
-    return picks.slice(0, 3);
-  }, [product.id]);
-
-  const category = categories.find((c) => c.id === product.categoryId);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -273,14 +296,14 @@ export default function ProductDetailPage({
           <p className="text-gray-600 leading-relaxed">{product.description}</p>
 
           {/* Allergens */}
-          {product.allergens.length > 0 && (
+          {allergens.length > 0 && (
             <div>
               <div className="mb-2 flex items-center gap-1 text-sm font-medium text-gray-700">
                 <Info className="h-4 w-4" />
-                Allerg&egrave;nes
+                Allergènes
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {product.allergens.map((allergen) => (
+                {allergens.map((allergen) => (
                   <span
                     key={allergen}
                     className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600"
@@ -293,9 +316,9 @@ export default function ProductDetailPage({
           )}
 
           {/* Dietary tags */}
-          {product.dietary.length > 0 && (
+          {dietary.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
-              {product.dietary.map((diet) => (
+              {dietary.map((diet) => (
                 <span
                   key={diet}
                   className="rounded-full bg-secondary/10 px-3 py-1 text-xs font-medium text-secondary"
@@ -312,7 +335,7 @@ export default function ProductDetailPage({
               Taille
             </h2>
             <div className="flex flex-col gap-2">
-              {product.sizes.map((size, index) => (
+              {sizes.map((size, index) => (
                 <button
                   key={size.id}
                   type="button"
@@ -332,10 +355,10 @@ export default function ProductDetailPage({
           </div>
 
           {/* Supplements */}
-          {product.supplements.length > 0 && (
+          {supplements.length > 0 && (
             <div>
               <h2 className="mb-3 font-heading text-sm font-semibold text-wood">
-                Suppl&eacute;ments
+                Suppléments
               </h2>
               {Object.entries(supplementsByCategory).map(([catName, sups]) => (
                 <div key={catName} className="mb-3">
@@ -391,7 +414,7 @@ export default function ProductDetailPage({
                 onClick={() => setShowRemovedIngredients(!showRemovedIngredients)}
                 className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-wood transition-colors hover:border-gray-300"
               >
-                <span>Retirer des ingr&eacute;dients</span>
+                <span>Retirer des ingrédients</span>
                 {showRemovedIngredients ? (
                   <ChevronUp className="h-4 w-4 text-gray-400" />
                 ) : (
@@ -451,7 +474,7 @@ export default function ProductDetailPage({
                   }}
                   className="h-4 w-4 rounded border-gray-300 text-accent accent-accent"
                 />
-                Moiti&eacute;-moiti&eacute; (deux pizzas en une)
+                Moitié-moitié (deux pizzas en une)
               </label>
               {halfHalfEnabled && (
                 <div className="relative mt-2">
@@ -461,7 +484,7 @@ export default function ProductDetailPage({
                     className="w-full appearance-none rounded-lg border border-gray-200 bg-white py-2.5 pl-4 pr-8 text-sm text-wood focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   >
                     <option value="">
-                      Choisir la deuxi&egrave;me pizza...
+                      Choisir la deuxième pizza...
                     </option>
                     {halfHalfOptions.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -478,7 +501,7 @@ export default function ProductDetailPage({
           {/* Special instructions */}
           <div>
             <h2 className="mb-2 font-heading text-sm font-semibold text-wood">
-              Instructions sp&eacute;ciales
+              Instructions spéciales
             </h2>
             <textarea
               value={specialInstructions}
@@ -534,7 +557,7 @@ export default function ProductDetailPage({
       {crossSellProducts.length > 0 && (
         <section className="mt-16">
           <h2 className="mb-6 font-heading text-2xl font-bold text-wood">
-            Compl&eacute;tez votre commande
+            Complétez votre commande
           </h2>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {crossSellProducts.map((p) => (

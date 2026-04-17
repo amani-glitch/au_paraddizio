@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, X } from "lucide-react";
 import { useUIStore } from "@/stores/ui-store";
-import { searchProducts } from "@/lib/data";
 import { formatPrice, cn } from "@/lib/utils";
 import Link from "next/link";
 import type { Product } from "@/types";
@@ -26,7 +25,12 @@ export default function SearchOverlay() {
 
   useEffect(() => {
     if (query.length >= 2) {
-      setResults(searchProducts(query));
+      const controller = new AbortController();
+      fetch(`/api/products?search=${encodeURIComponent(query)}`, { signal: controller.signal })
+        .then(r => r.json())
+        .then((data: Product[]) => setResults(data))
+        .catch(() => {});
+      return () => controller.abort();
     } else {
       setResults([]);
     }

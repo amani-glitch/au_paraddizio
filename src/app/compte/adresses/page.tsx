@@ -20,16 +20,16 @@ const initialAddresses: Address[] = [
     street: "12 Rue des Oliviers",
     city: "Entraigues-sur-la-Sorgue",
     postalCode: "84320",
-    instructions: "Interphone 3B, 2\u00e8me \u00e9tage",
+    instructions: "Interphone 3B, 2ème étage",
     isDefault: true,
   },
   {
     id: "addr-2",
     label: "Bureau",
-    street: "45 Avenue de la R\u00e9publique",
+    street: "45 Avenue de la République",
     city: "Avignon",
     postalCode: "84000",
-    instructions: "B\u00e2timent B, accueil",
+    instructions: "Bâtiment B, accueil",
     isDefault: false,
   },
 ];
@@ -86,7 +86,7 @@ export default function AdressesPage() {
 
   function validate(): boolean {
     const next: Record<string, string> = {};
-    if (!form.label.trim()) next.label = "Le libell\u00e9 est requis";
+    if (!form.label.trim()) next.label = "Le libellé est requis";
     if (!form.street.trim()) next.street = "L'adresse est requise";
     if (!form.city.trim()) next.city = "La ville est requise";
     if (!form.postalCode.trim()) {
@@ -193,7 +193,7 @@ export default function AdressesPage() {
             {/* Label */}
             <div>
               <label htmlFor="addr-label" className="mb-1.5 block text-sm font-medium text-gray-700">
-                Libell&eacute; (ex: Maison, Bureau)
+                Libellé (ex: Maison, Bureau)
               </label>
               <input
                 id="addr-label"
@@ -277,7 +277,7 @@ export default function AdressesPage() {
                 id="addr-instructions"
                 value={form.instructions}
                 onChange={(e) => setForm({ ...form, instructions: e.target.value })}
-                placeholder="Interphone, \u00e9tage, code d'entr\u00e9e..."
+                placeholder="Interphone, étage, code d'entrée..."
                 rows={2}
                 className="w-full rounded-lg border border-gray-200 py-2.5 px-4 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
@@ -290,7 +290,7 @@ export default function AdressesPage() {
               className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-primary-dark"
             >
               <Save className="h-4 w-4" />
-              {editingId ? "Mettre \u00e0 jour" : "Ajouter"}
+              {editingId ? "Mettre à jour" : "Ajouter"}
             </button>
             <button
               type="button"
@@ -308,7 +308,7 @@ export default function AdressesPage() {
         <div className="flex flex-col items-center justify-center rounded-2xl bg-white py-16 text-center shadow-sm">
           <MapPin className="mb-4 h-12 w-12 text-gray-300" />
           <p className="text-lg font-medium text-gray-500">
-            Aucune adresse enregistr&eacute;e
+            Aucune adresse enregistrée
           </p>
           <p className="mt-1 text-sm text-gray-400">
             Ajoutez une adresse pour faciliter vos commandes.
@@ -328,7 +328,7 @@ export default function AdressesPage() {
               {addr.isDefault && (
                 <span className="absolute -top-2 left-4 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold text-white">
                   <Star className="h-3 w-3" />
-                  Par d&eacute;faut
+                  Par défaut
                 </span>
               )}
 
@@ -369,7 +369,7 @@ export default function AdressesPage() {
                     className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:border-accent hover:text-accent"
                   >
                     <Star className="h-3 w-3" />
-                    D&eacute;finir par d&eacute;faut
+                    Définir par défaut
                   </button>
                 )}
               </div>

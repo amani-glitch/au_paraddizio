@@ -63,12 +63,12 @@ export default function InscriptionPage() {
       next.email = "Format d'email invalide";
     }
     if (phone && !/^[0-9+\s()-]{6,20}$/.test(phone)) {
-      next.phone = "Format de t\u00e9l\u00e9phone invalide";
+      next.phone = "Format de téléphone invalide";
     }
     if (!password) {
       next.password = "Le mot de passe est requis";
     } else if (password.length < 6) {
-      next.password = "Le mot de passe doit contenir au moins 6 caract\u00e8res";
+      next.password = "Le mot de passe doit contenir au moins 6 caractères";
     }
     if (password !== confirmPassword) {
       next.confirmPassword = "Les mots de passe ne correspondent pas";
@@ -131,7 +131,7 @@ export default function InscriptionPage() {
         {/* Card */}
         <div className="rounded-2xl bg-white p-8 shadow-lg">
           <h2 className="mb-6 text-center font-heading text-2xl font-bold text-wood">
-            Cr&eacute;er un compte
+            Créer un compte
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
@@ -182,7 +182,7 @@ export default function InscriptionPage() {
             {/* Phone */}
             <div>
               <label htmlFor="phone" className="mb-1.5 block text-sm font-medium text-gray-700">
-                T&eacute;l&eacute;phone
+                Téléphone
               </label>
               <div className="relative">
                 <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -213,7 +213,7 @@ export default function InscriptionPage() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Minimum 6 caract\u00e8res"
+                  placeholder="Minimum 6 caractères"
                   className={cn(
                     "w-full rounded-lg border py-2.5 pl-10 pr-10 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30",
                     errors.password ? "border-red-400 focus:border-red-500" : "border-gray-200 focus:border-primary"
@@ -249,7 +249,7 @@ export default function InscriptionPage() {
                       strength === "strong" && "text-secondary"
                     )}
                   >
-                    S&eacute;curit&eacute; : {strengthConfig[strength].label}
+                    Sécurité : {strengthConfig[strength].label}
                   </p>
                 </div>
               )}
@@ -302,7 +302,7 @@ export default function InscriptionPage() {
                   </Link>{" "}
                   et la{" "}
                   <Link href="#" className="font-medium text-primary hover:text-primary-dark">
-                    politique de confidentialit&eacute;
+                    politique de confidentialité
                   </Link>
                 </span>
               </label>
@@ -326,7 +326,7 @@ export default function InscriptionPage() {
 
           {/* Login link */}
           <p className="mt-6 text-center text-sm text-gray-600">
-            D&eacute;j&agrave; un compte ?{" "}
+            Déjà un compte ?{" "}
             <Link
               href="/connexion"
               className="font-semibold text-primary hover:text-primary-dark"

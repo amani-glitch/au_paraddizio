@@ -19,8 +19,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { formatPrice, cn } from "@/lib/utils";
-import { storeInfo } from "@/lib/data";
-import type { OrderStatus } from "@/types";
+import type { OrderStatus, StoreInfo } from "@/types";
 
 // ─── Order status types ─────────────────────────────────────────────────────────
 
@@ -66,26 +65,26 @@ interface ApiOrder {
 const STATUS_STEPS: StatusStep[] = [
   {
     key: "PENDING",
-    label: "Re\u00e7ue",
-    description: "Votre commande a \u00e9t\u00e9 re\u00e7ue",
+    label: "Reçue",
+    description: "Votre commande a été reçue",
     icon: <Package className="w-5 h-5" />,
   },
   {
     key: "ACCEPTED",
-    label: "Accept\u00e9e",
-    description: "Le restaurant a accept\u00e9 votre commande",
+    label: "Acceptée",
+    description: "Le restaurant a accepté votre commande",
     icon: <Check className="w-5 h-5" />,
   },
   {
     key: "PREPARING",
-    label: "En pr\u00e9paration",
-    description: "Votre commande est en cours de pr\u00e9paration",
+    label: "En préparation",
+    description: "Votre commande est en cours de préparation",
     icon: <Flame className="w-5 h-5" />,
   },
   {
     key: "READY",
-    label: "Pr\u00eate",
-    description: "Votre commande est pr\u00eate",
+    label: "Prête",
+    description: "Votre commande est prête",
     icon: <ChefHat className="w-5 h-5" />,
   },
   {
@@ -96,8 +95,8 @@ const STATUS_STEPS: StatusStep[] = [
   },
   {
     key: "DELIVERED",
-    label: "Livr\u00e9e",
-    description: "Votre commande a \u00e9t\u00e9 livr\u00e9e",
+    label: "Livrée",
+    description: "Votre commande a été livrée",
     icon: <MapPin className="w-5 h-5" />,
   },
 ];
@@ -138,8 +137,13 @@ export default function OrderTrackingPage() {
   const orderNumber = params.orderNumber as string;
 
   const [order, setOrder] = useState<ApiOrder | null>(null);
+  const [storeInfo, setStoreInfo] = useState<StoreInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/store").then(r => r.json()).then(setStoreInfo).catch(() => {});
+  }, []);
 
   useEffect(() => {
     async function fetchOrder() {
@@ -236,14 +240,14 @@ export default function OrderTrackingPage() {
             {error ?? "Commande introuvable"}
           </h2>
           <p className="text-sm text-wood-light mb-6">
-            V&eacute;rifiez le num&eacute;ro de commande et r&eacute;essayez.
+            Vérifiez le numéro de commande et réessayez.
           </p>
           <Link
             href="/"
             className="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold px-6 py-3 rounded-full transition-all"
           >
             <Home className="w-4 h-4" />
-            Retour &agrave; l&apos;accueil
+            Retour à l&apos;accueil
           </Link>
         </div>
       </div>
@@ -303,7 +307,7 @@ export default function OrderTrackingPage() {
           {isCancelled ? (
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-100 text-red-700 border border-red-200">
               <AlertTriangle className="w-4 h-4" />
-              <span className="font-semibold text-sm">Annul&eacute;e</span>
+              <span className="font-semibold text-sm">Annulée</span>
             </div>
           ) : (
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent border border-accent/20">
@@ -333,8 +337,8 @@ export default function OrderTrackingPage() {
                   <div>
                     <p className="text-sm text-wood-light">
                       {order.mode === "DELIVERY"
-                        ? "Heure estim\u00e9e d\u2019arriv\u00e9e"
-                        : "Heure estim\u00e9e"}
+                        ? "Heure estimée d’arrivée"
+                        : "Heure estimée"}
                     </p>
                     <p className="font-heading font-bold text-wood text-2xl">
                       {order.estimatedReadyAt
@@ -344,7 +348,7 @@ export default function OrderTrackingPage() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-wood-light">Command&eacute; &agrave;</p>
+                  <p className="text-xs text-wood-light">Commandé à</p>
                   <p className="font-semibold text-wood">{placedAt}</p>
                 </div>
               </div>
@@ -374,7 +378,7 @@ export default function OrderTrackingPage() {
               className="bg-white rounded-2xl p-6 shadow-sm border border-wood/5"
             >
               <h3 className="font-heading font-semibold text-wood mb-6">
-                Suivi en temps r&eacute;el
+                Suivi en temps réel
               </h3>
 
               <div className="relative">
@@ -457,7 +461,7 @@ export default function OrderTrackingPage() {
               </h3>
               <div className="flex flex-col sm:flex-row gap-3">
                 <a
-                  href={`tel:${storeInfo.phone.replace(/\s/g, "")}`}
+                  href={`tel:${storeInfo?.phone.replace(/\s/g, "") ?? ""}`}
                   className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-sm hover:shadow"
                 >
                   <Phone className="w-4 h-4" />
@@ -465,7 +469,7 @@ export default function OrderTrackingPage() {
                 </a>
                 <div className="flex items-center gap-2 text-sm text-wood-light px-4">
                   <MapPin className="w-4 h-4 flex-shrink-0" />
-                  {storeInfo.address}
+                  {storeInfo?.address}
                 </div>
               </div>
             </motion.div>
@@ -481,7 +485,7 @@ export default function OrderTrackingPage() {
             >
               <h3 className="font-heading font-semibold text-wood mb-4 flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5 text-accent" />
-                D&eacute;tail de la commande
+                Détail de la commande
               </h3>
 
               {/* Items */}
@@ -528,7 +532,7 @@ export default function OrderTrackingPage() {
                 )}
                 {order.discount > 0 && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-secondary">R&eacute;duction</span>
+                    <span className="text-secondary">Réduction</span>
                     <span className="text-secondary font-medium">
                       -{formatPrice(order.discount)}
                     </span>
@@ -560,7 +564,7 @@ export default function OrderTrackingPage() {
                 <div className="flex items-center gap-2 text-xs text-wood-light">
                   <Package className="w-4 h-4 text-wood/40" />
                   <span>
-                    Pay&eacute; par{" "}
+                    Payé par{" "}
                     <strong className="text-wood">
                       {paymentLabels[order.paymentMethod ?? ""] ?? order.paymentMethod ?? "N/A"}
                     </strong>
@@ -581,7 +585,7 @@ export default function OrderTrackingPage() {
                 className="inline-flex items-center gap-2 text-wood hover:text-primary font-semibold text-sm transition-colors"
               >
                 <Home className="w-4 h-4" />
-                Retour &agrave; l&apos;accueil
+                Retour à l&apos;accueil
               </Link>
             </motion.div>
           </div>

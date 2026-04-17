@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { MapPin, Phone, Clock, Star, Truck, ChefHat, Flame, ArrowRight } from "lucide-react";
-import { categories, getBestSellers, getPizzaOfMonth, storeInfo } from "@/lib/data";
-import type { OrderMode } from "@/types";
+import type { OrderMode, Product, Category, StoreInfo } from "@/types";
 import { formatPrice, cn, isStoreOpen } from "@/lib/utils";
 import { useCartStore } from "@/stores";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // ─── Emoji map for categories ─────────────────────────────────────────────────
 const categoryEmojis: Record<string, string> = {
@@ -34,19 +33,19 @@ const dayNames = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi",
 const reviews = [
   {
     stars: 5,
-    text: "Les meilleures pizzas de la r\u00e9gion ! La p\u00e2te au feu de bois est incroyable, croustillante et l\u00e9g\u00e8re. La Corsica est un r\u00e9gal. On revient chaque semaine !",
+    text: "Les meilleures pizzas de la région ! La pâte au feu de bois est incroyable, croustillante et légère. La Corsica est un régal. On revient chaque semaine !",
     name: "Sophie M.",
     date: "Il y a 2 semaines",
   },
   {
     stars: 5,
-    text: "Service rapide et pizzas toujours chaudes \u00e0 la livraison. Les enfants adorent la Margherita et nous la 4 Fromages. Rapport qualit\u00e9-prix imbattable.",
+    text: "Service rapide et pizzas toujours chaudes à la livraison. Les enfants adorent la Margherita et nous la 4 Fromages. Rapport qualité-prix imbattable.",
     name: "Jean-Pierre L.",
     date: "Il y a 1 mois",
   },
   {
     stars: 4,
-    text: "Tr\u00e8s bonne pizzeria, les ingr\u00e9dients sont frais et on sent le go\u00fbt authentique. Le tiramisu maison est une tuerie. Je recommande vivement !",
+    text: "Très bonne pizzeria, les ingrédients sont frais et on sent le goût authentique. Le tiramisu maison est une tuerie. Je recommande vivement !",
     name: "Camille D.",
     date: "Il y a 3 semaines",
   },
@@ -55,16 +54,35 @@ const reviews = [
 // ─── Order mode labels ────────────────────────────────────────────────────────
 const orderModes: { mode: OrderMode; label: string; icon: React.ReactNode }[] = [
   { mode: "DELIVERY", label: "Livraison", icon: <Truck className="w-4 h-4" /> },
-  { mode: "TAKEAWAY", label: "\u00c0 emporter", icon: <ChefHat className="w-4 h-4" /> },
+  { mode: "TAKEAWAY", label: "À emporter", icon: <ChefHat className="w-4 h-4" /> },
   { mode: "DINE_IN", label: "Sur place", icon: <MapPin className="w-4 h-4" /> },
 ];
 
 export default function HomePage() {
   const { setOrderMode, orderMode, addItem } = useCartStore();
   const [selectedMode, setSelectedMode] = useState<OrderMode>(orderMode);
-  const open = isStoreOpen(storeInfo.openingHours);
-  const bestSellers = getBestSellers();
-  const pizzaOfMonth = getPizzaOfMonth();
+
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [bestSellers, setBestSellers] = useState<Product[]>([]);
+  const [pizzaOfMonth, setPizzaOfMonth] = useState<Product | null>(null);
+  const [storeData, setStoreData] = useState<StoreInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/categories").then(r => r.json()),
+      fetch("/api/products").then(r => r.json()),
+      fetch("/api/store").then(r => r.json()),
+    ]).then(([cats, prods, store]) => {
+      setCategories(cats);
+      const allProducts = prods as Product[];
+      setBestSellers(allProducts.filter((p: Product) => p.isBestSeller).slice(0, 4));
+      setPizzaOfMonth(allProducts.find((p: Product) => p.isPizzaOfMonth) ?? null);
+      setStoreData(store);
+    }).finally(() => setLoading(false));
+  }, []);
+
+  const open = storeData ? isStoreOpen(storeData.openingHours) : false;
 
   const handleModeChange = (mode: OrderMode) => {
     setSelectedMode(mode);
@@ -80,6 +98,17 @@ export default function HomePage() {
       supplements: [],
     });
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-cream flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-10 w-10 mx-auto animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="mt-4 text-wood-light text-sm">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-cream">
@@ -116,7 +145,7 @@ export default function HomePage() {
                     open ? "bg-secondary" : "bg-primary"
                   )}
                 />
-                {open ? "Ouvert maintenant" : "Ferm\u00e9 actuellement"}
+                {open ? "Ouvert maintenant" : "Fermé actuellement"}
               </span>
             </div>
 
@@ -127,8 +156,8 @@ export default function HomePage() {
             </h1>
 
             <p className="text-lg sm:text-xl text-wood-light leading-relaxed mb-10 max-w-2xl mx-auto">
-              Plus de 60 recettes maison, cuites au feu de bois avec des ingr&eacute;dients frais.
-              Livraison et &agrave; emporter &agrave; Entraigues-sur-la-Sorgue.
+              Plus de 60 recettes maison, cuites au feu de bois avec des ingrédients frais.
+              Livraison et à emporter à Entraigues-sur-la-Sorgue.
             </p>
 
             {/* Order Mode Selector */}
@@ -220,7 +249,7 @@ export default function HomePage() {
               Nos best-sellers
             </h2>
             <p className="text-wood-light text-lg">
-              Les pizzas pr&eacute;f&eacute;r&eacute;es de nos clients
+              Les pizzas préférées de nos clients
             </p>
             <div className="w-16 h-1 bg-accent rounded-full mx-auto mt-4" />
           </div>
@@ -252,7 +281,7 @@ export default function HomePage() {
                   <div className="flex items-center justify-between">
                     <span className="text-primary font-bold text-lg">
                       {product.sizes.length > 0
-                        ? `D\u00e8s ${formatPrice(product.sizes[0].price)}`
+                        ? `Dès ${formatPrice(product.sizes[0].price)}`
                         : formatPrice(product.basePrice)}
                     </span>
                     <button
@@ -301,14 +330,14 @@ export default function HomePage() {
                   <div className="flex flex-col sm:flex-row items-center gap-4">
                     <span className="text-primary font-bold text-xl">
                       {pizzaOfMonth.sizes.length > 1
-                        ? `${formatPrice(pizzaOfMonth.sizes[0].price)} \u2013 ${formatPrice(pizzaOfMonth.sizes[pizzaOfMonth.sizes.length - 1].price)}`
+                        ? `${formatPrice(pizzaOfMonth.sizes[0].price)} – ${formatPrice(pizzaOfMonth.sizes[pizzaOfMonth.sizes.length - 1].price)}`
                         : formatPrice(pizzaOfMonth.basePrice)}
                     </span>
                     <Link
                       href={`/menu?category=pizzas`}
                       className="inline-flex items-center gap-2 bg-accent hover:bg-accent-light text-white font-bold px-6 py-3 rounded-full shadow-md hover:shadow-lg transition-all duration-300"
                     >
-                      D&eacute;couvrir
+                      Découvrir
                       <ArrowRight className="w-4 h-4" />
                     </Link>
                   </div>
@@ -335,22 +364,22 @@ export default function HomePage() {
             {/* Text column */}
             <div>
               <p className="text-wood-light leading-relaxed text-lg mb-4">
-                Fond&eacute;e par <strong className="text-wood">Adrien et Aldo Baldelli</strong>,
-                la pizzeria <strong className="text-wood">Au Paradizzio</strong> est un v&eacute;ritable
-                hommage &agrave; la tradition italienne. Chaque pizza est p&eacute;trie &agrave; la main avec une
-                <strong className="text-wood"> p&acirc;te maison</strong> pr&eacute;par&eacute;e chaque jour et cuite dans
-                notre authentique <strong className="text-wood">four &agrave; bois</strong>.
+                Fondée par <strong className="text-wood">Adrien et Aldo Baldelli</strong>,
+                la pizzeria <strong className="text-wood">Au Paradizzio</strong> est un véritable
+                hommage à la tradition italienne. Chaque pizza est pétrie à la main avec une
+                <strong className="text-wood"> pâte maison</strong> préparée chaque jour et cuite dans
+                notre authentique <strong className="text-wood">four à bois</strong>.
               </p>
               <p className="text-wood-light leading-relaxed text-lg mb-4">
-                Avec plus de <strong className="text-wood">60 recettes</strong> cr&eacute;&eacute;es au fil des ann&eacute;es,
+                Avec plus de <strong className="text-wood">60 recettes</strong> créées au fil des années,
                 nous proposons un voyage gustatif unique allant des classiques incontournables aux
-                cr&eacute;ations originales du chef. Des ingr&eacute;dients frais et s&eacute;lectionn&eacute;s avec
-                soin font la diff&eacute;rence.
+                créations originales du chef. Des ingrédients frais et sélectionnés avec
+                soin font la différence.
               </p>
               <p className="text-wood-light leading-relaxed text-lg mb-8">
-                Fiers d&apos;&ecirc;tre labellis&eacute;s{" "}
+                Fiers d&apos;être labellisés{" "}
                 <strong className="text-wood">Tables et Auberges de France</strong>, nous nous
-                engageons chaque jour &agrave; offrir une exp&eacute;rience culinaire d&apos;exception &agrave;
+                engageons chaque jour à offrir une expérience culinaire d&apos;exception à
                 Entraigues-sur-la-Sorgue et ses environs.
               </p>
 
@@ -360,7 +389,7 @@ export default function HomePage() {
                   { icon: <ChefHat className="w-6 h-6 text-primary" />, label: "60+", sub: "recettes" },
                   { icon: <Star className="w-6 h-6 text-accent" />, label: "4.7/5", sub: "sur Google" },
                   { icon: <Flame className="w-6 h-6 text-primary" />, label: "Feu de", sub: "bois" },
-                  { icon: <ChefHat className="w-6 h-6 text-secondary" />, label: "P\u00e2te", sub: "maison" },
+                  { icon: <ChefHat className="w-6 h-6 text-secondary" />, label: "Pâte", sub: "maison" },
                 ].map((stat, i) => (
                   <div
                     key={i}
@@ -378,7 +407,7 @@ export default function HomePage() {
             <div className="relative">
               <div className="aspect-[4/3] rounded-3xl bg-gradient-to-br from-wood/10 to-primary/5 flex flex-col items-center justify-center border-2 border-dashed border-wood/15">
                 <Flame className="w-16 h-16 text-primary/30 mb-4" />
-                <span className="text-wood/40 font-heading text-lg">Four &agrave; bois traditionnel</span>
+                <span className="text-wood/40 font-heading text-lg">Four à bois traditionnel</span>
               </div>
               {/* Floating badge */}
               <div className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-lg p-4 border border-wood/10">
@@ -435,7 +464,7 @@ export default function HomePage() {
                 </div>
                 {/* Review text */}
                 <p className="text-wood-light leading-relaxed mb-4 text-sm">
-                  &laquo; {review.text} &raquo;
+                  « {review.text} »
                 </p>
                 {/* Reviewer info */}
                 <div className="flex items-center justify-between border-t border-wood/5 pt-3">
@@ -470,7 +499,7 @@ export default function HomePage() {
                 </div>
                 <div>
                   <h3 className="font-heading font-semibold text-wood mb-1">Adresse</h3>
-                  <p className="text-wood-light">{storeInfo.address}</p>
+                  <p className="text-wood-light">{storeData!.address}</p>
                 </div>
               </div>
 
@@ -480,12 +509,12 @@ export default function HomePage() {
                   <Phone className="w-5 h-5 text-secondary" />
                 </div>
                 <div>
-                  <h3 className="font-heading font-semibold text-wood mb-1">T&eacute;l&eacute;phone</h3>
+                  <h3 className="font-heading font-semibold text-wood mb-1">Téléphone</h3>
                   <a
-                    href={`tel:${storeInfo.phone.replace(/\s/g, "")}`}
+                    href={`tel:${storeData!.phone.replace(/\s/g, "")}`}
                     className="text-primary hover:text-primary-dark font-semibold transition-colors"
                   >
-                    {storeInfo.phone}
+                    {storeData!.phone}
                   </a>
                 </div>
               </div>
@@ -499,16 +528,16 @@ export default function HomePage() {
                   <h3 className="font-heading font-semibold text-wood mb-3">Horaires d&apos;ouverture</h3>
                   <table className="w-full text-sm">
                     <tbody>
-                      {storeInfo.openingHours.map((hours) => (
+                      {storeData!.openingHours.map((hours) => (
                         <tr key={hours.dayOfWeek} className="border-b border-wood/5 last:border-0">
                           <td className="py-1.5 font-medium text-wood">
                             {dayNames[hours.dayOfWeek]}
                           </td>
                           <td className="py-1.5 text-right text-wood-light">
                             {hours.isClosed ? (
-                              <span className="text-primary font-medium">Ferm&eacute;</span>
+                              <span className="text-primary font-medium">Fermé</span>
                             ) : (
-                              `${hours.openTime} \u2013 ${hours.closeTime}`
+                              `${hours.openTime} – ${hours.closeTime}`
                             )}
                           </td>
                         </tr>
@@ -522,7 +551,7 @@ export default function HomePage() {
               <div className="flex items-start gap-4 p-4 rounded-xl bg-secondary/5 border border-secondary/10">
                 <Truck className="w-5 h-5 text-secondary flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-secondary font-medium">
-                  Livraison gratuite &agrave; Entraigues-sur-la-Sorgue, d&egrave;s 15&euro;
+                  Livraison gratuite à Entraigues-sur-la-Sorgue, dès 15€
                 </p>
               </div>
             </div>
@@ -553,10 +582,10 @@ export default function HomePage() {
       <section className="bg-gradient-to-r from-accent to-accent-light py-14 sm:py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="font-heading text-3xl sm:text-4xl font-bold text-white mb-4">
-            Pr&ecirc;t &agrave; commander ?
+            Prêt à commander ?
           </h2>
           <p className="text-white/80 text-lg mb-8">
-            Choisissez parmi nos 60 recettes artisanales et r&eacute;galez-vous !
+            Choisissez parmi nos 60 recettes artisanales et régalez-vous !
           </p>
           <Link
             href="/menu"

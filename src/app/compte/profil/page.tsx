@@ -39,7 +39,7 @@ export default function ProfilPage() {
     e.preventDefault();
     const next: Record<string, string> = {};
     if (!currentPassword) next.currentPassword = "Mot de passe actuel requis";
-    if (newPassword.length < 6) next.newPassword = "Minimum 6 caract\u00e8res";
+    if (newPassword.length < 6) next.newPassword = "Minimum 6 caractères";
     if (newPassword !== confirmPassword)
       next.confirmPassword = "Les mots de passe ne correspondent pas";
     setErrors((prev) => ({ ...prev, ...next }));
@@ -118,7 +118,7 @@ export default function ProfilPage() {
           {/* Phone */}
           <div>
             <label htmlFor="phone" className="mb-1.5 block text-sm font-medium text-gray-700">
-              T&eacute;l&eacute;phone
+              Téléphone
             </label>
             <div className="relative">
               <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -140,7 +140,7 @@ export default function ProfilPage() {
           {saved ? (
             <>
               <Check className="h-4 w-4" />
-              Enregistr&eacute;
+              Enregistré
             </>
           ) : (
             <>
@@ -194,7 +194,7 @@ export default function ProfilPage() {
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Minimum 6 caract\u00e8res"
+                placeholder="Minimum 6 caractères"
                 className={cn(
                   "w-full rounded-lg border py-2.5 pl-10 pr-4 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30",
                   errors.newPassword ? "border-red-400" : "border-gray-200 focus:border-primary"
@@ -236,7 +236,7 @@ export default function ProfilPage() {
           {passwordSaved ? (
             <>
               <Check className="h-4 w-4" />
-              Mot de passe modifi&eacute;
+              Mot de passe modifié
             </>
           ) : (
             <>
@@ -253,8 +253,8 @@ export default function ProfilPage() {
           Zone de danger
         </h2>
         <p className="mb-4 text-sm text-gray-600">
-          La suppression de votre compte est irr&eacute;versible. Toutes vos donn&eacute;es seront
-          d&eacute;finitivement supprim&eacute;es.
+          La suppression de votre compte est irréversible. Toutes vos données seront
+          définitivement supprimées.
         </p>
 
         {!showDeleteConfirm ? (
@@ -269,7 +269,7 @@ export default function ProfilPage() {
         ) : (
           <div className="flex flex-col gap-3 rounded-lg border border-red-300 bg-red-50 p-4">
             <p className="text-sm font-medium text-red-700">
-              &Ecirc;tes-vous s&ucirc;r de vouloir supprimer votre compte ?
+              Êtes-vous sûr de vouloir supprimer votre compte ?
             </p>
             <div className="flex gap-3">
               <button

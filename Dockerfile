@@ -1,16 +1,24 @@
 FROM node:20-alpine AS base
 
+# Build arguments for NEXT_PUBLIC_ vars (needed at build time by Next.js)
+ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=""
+ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID=""
+
 # Install dependencies only when needed
 FROM base AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+RUN npm ci
 
 # Build the application
 FROM base AS builder
+ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=""
+ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID=""
+ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
+
 WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build

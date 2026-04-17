@@ -18,12 +18,12 @@ import type { Order, OrderStatus } from "@/types";
 
 const statusLabels: Record<OrderStatus, string> = {
   PENDING: "En attente",
-  ACCEPTED: "Accept\u00e9e",
-  PREPARING: "En pr\u00e9paration",
-  READY: "Pr\u00eate",
+  ACCEPTED: "Acceptée",
+  PREPARING: "En préparation",
+  READY: "Prête",
   DELIVERING: "En livraison",
-  DELIVERED: "Livr\u00e9e",
-  CANCELLED: "Annul\u00e9e",
+  DELIVERED: "Livrée",
+  CANCELLED: "Annulée",
 };
 
 const statusColors: Record<OrderStatus, string> = {
@@ -163,7 +163,7 @@ export default function ComptePage() {
           </div>
           <div>
             <p className="text-2xl font-bold text-wood">{user.loyaltyPoints}</p>
-            <p className="text-sm text-gray-500">Points de fid&eacute;lit&eacute;</p>
+            <p className="text-sm text-gray-500">Points de fidélité</p>
           </div>
         </div>
 
@@ -173,7 +173,7 @@ export default function ComptePage() {
           </div>
           <div>
             <p className="text-2xl font-bold text-wood">{formatPrice(totalSpent)}</p>
-            <p className="text-sm text-gray-500">Total d&eacute;pens&eacute;</p>
+            <p className="text-sm text-gray-500">Total dépensé</p>
           </div>
         </div>
       </div>
@@ -182,7 +182,7 @@ export default function ComptePage() {
       <div className="rounded-2xl bg-white p-6 shadow-sm">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-heading text-lg font-bold text-wood">
-            Commandes r&eacute;centes
+            Commandes récentes
           </h2>
           <Link
             href="/compte/commandes"
@@ -226,7 +226,7 @@ export default function ComptePage() {
                       month: "long",
                       year: "numeric",
                     })}{" "}
-                    &mdash; {order.items.map((i) => i.productName).join(", ")}
+                    — {order.items.map((i) => i.productName).join(", ")}
                   </p>
                 </div>
                 <p className="text-sm font-bold text-primary">

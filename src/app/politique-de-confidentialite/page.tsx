@@ -37,10 +37,10 @@ export default function PolitiqueConfidentialitePage() {
       <section className="bg-gradient-to-br from-wood via-wood to-wood-light py-16 sm:py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="font-heading text-4xl sm:text-5xl font-bold text-white mb-4">
-            Politique de Confidentialit&eacute;
+            Politique de Confidentialité
           </h1>
           <p className="text-cream/70 text-sm">
-            Derni&egrave;re mise &agrave; jour : 1er janvier 2025
+            Dernière mise à jour : 1er janvier 2025
           </p>
         </div>
       </section>
@@ -50,12 +50,12 @@ export default function PolitiqueConfidentialitePage() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-2xl shadow-sm border border-wood/5 p-8 sm:p-12">
             <p className="text-wood-light leading-relaxed mb-8">
-              La pr&eacute;sente Politique de Confidentialit&eacute; d&eacute;crit la mani&egrave;re dont
-              la soci&eacute;t&eacute; SARL BALDO, exploitant{" "}
+              La présente Politique de Confidentialité décrit la manière dont
+              la société SARL BALDO, exploitant{" "}
               <strong className="text-wood">Au Paradizzio Pizzas</strong>,
-              collecte, utilise et prot&egrave;ge vos donn&eacute;es personnelles
-              conform&eacute;ment au R&egrave;glement G&eacute;n&eacute;ral sur la Protection des
-              Donn&eacute;es (RGPD) et &agrave; la loi Informatique et Libert&eacute;s.
+              collecte, utilise et protège vos données personnelles
+              conformément au Règlement Général sur la Protection des
+              Données (RGPD) et à la loi Informatique et Libertés.
             </p>
 
             <Section title="1. Responsable du traitement">
@@ -64,11 +64,11 @@ export default function PolitiqueConfidentialitePage() {
                   <strong className="text-wood">SARL BALDO</strong>
                 </p>
                 <p>
-                  Si&egrave;ge social : 711 Route de Carpentras, 84320
+                  Siège social : 711 Route de Carpentras, 84320
                   Entraigues-sur-la-Sorgue
                 </p>
-                <p>SIREN : 935 005 637 &mdash; RCS Avignon</p>
-                <p>G&eacute;rant : Adrien Baldelli</p>
+                <p>SIREN : 935 005 637 — RCS Avignon</p>
+                <p>Gérant : Adrien Baldelli</p>
                 <p>
                   Contact DPO :{" "}
                   <a
@@ -81,69 +81,69 @@ export default function PolitiqueConfidentialitePage() {
               </div>
             </Section>
 
-            <Section title="2. Donn&eacute;es collect&eacute;es">
+            <Section title="2. Données collectées">
               <p>
-                Dans le cadre de l&apos;utilisation du site et des services propos&eacute;s,
-                nous pouvons &ecirc;tre amen&eacute;s &agrave; collecter les donn&eacute;es suivantes :
+                Dans le cadre de l&apos;utilisation du site et des services proposés,
+                nous pouvons être amenés à collecter les données suivantes :
               </p>
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li>
-                  <strong className="text-wood">Donn&eacute;es d&apos;identification :</strong>{" "}
-                  nom, pr&eacute;nom, adresse email, num&eacute;ro de t&eacute;l&eacute;phone
+                  <strong className="text-wood">Données d&apos;identification :</strong>{" "}
+                  nom, prénom, adresse email, numéro de téléphone
                 </li>
                 <li>
-                  <strong className="text-wood">Donn&eacute;es de livraison :</strong>{" "}
+                  <strong className="text-wood">Données de livraison :</strong>{" "}
                   adresse postale, instructions de livraison
                 </li>
                 <li>
-                  <strong className="text-wood">Donn&eacute;es de commande :</strong>{" "}
-                  historique des commandes, pr&eacute;f&eacute;rences alimentaires
+                  <strong className="text-wood">Données de commande :</strong>{" "}
+                  historique des commandes, préférences alimentaires
                 </li>
                 <li>
-                  <strong className="text-wood">Donn&eacute;es de connexion :</strong>{" "}
-                  adresse IP, type de navigateur, pages visit&eacute;es
+                  <strong className="text-wood">Données de connexion :</strong>{" "}
+                  adresse IP, type de navigateur, pages visitées
                 </li>
                 <li>
-                  <strong className="text-wood">Donn&eacute;es de paiement :</strong>{" "}
-                  trait&eacute;es directement par notre prestataire de paiement (Stripe),
+                  <strong className="text-wood">Données de paiement :</strong>{" "}
+                  traitées directement par notre prestataire de paiement (Stripe),
                   sans stockage sur nos serveurs
                 </li>
               </ul>
             </Section>
 
-            <Section title="3. Finalit&eacute;s du traitement">
-              <p>Vos donn&eacute;es personnelles sont collect&eacute;es pour :</p>
+            <Section title="3. Finalités du traitement">
+              <p>Vos données personnelles sont collectées pour :</p>
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li>La gestion et le suivi de vos commandes</li>
                 <li>La livraison de vos produits</li>
                 <li>La gestion de votre compte client</li>
                 <li>
-                  Le programme de fid&eacute;lit&eacute; (suivi des points, offres
-                  personnalis&eacute;es)
+                  Le programme de fidélité (suivi des points, offres
+                  personnalisées)
                 </li>
                 <li>
                   L&apos;envoi de communications marketing (newsletters, offres
-                  promotionnelles) &mdash; uniquement avec votre consentement
-                  pr&eacute;alable
+                  promotionnelles) — uniquement avec votre consentement
+                  préalable
                 </li>
                 <li>
-                  L&apos;am&eacute;lioration de nos services et de l&apos;exp&eacute;rience utilisateur
+                  L&apos;amélioration de nos services et de l&apos;expérience utilisateur
                 </li>
-                <li>Le respect de nos obligations l&eacute;gales et r&eacute;glementaires</li>
+                <li>Le respect de nos obligations légales et réglementaires</li>
               </ul>
             </Section>
 
-            <Section title="4. Base l&eacute;gale du traitement">
+            <Section title="4. Base légale du traitement">
               <p>
-                Le traitement de vos donn&eacute;es repose sur les bases l&eacute;gales
+                Le traitement de vos données repose sur les bases légales
                 suivantes :
               </p>
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li>
                   <strong className="text-wood">
-                    Ex&eacute;cution du contrat :
+                    Exécution du contrat :
                   </strong>{" "}
-                  traitement n&eacute;cessaire &agrave; la gestion de vos commandes et &agrave; la
+                  traitement nécessaire à la gestion de vos commandes et à la
                   fourniture de nos services
                 </li>
                 <li>
@@ -151,35 +151,35 @@ export default function PolitiqueConfidentialitePage() {
                   communications marketing, cookies non essentiels
                 </li>
                 <li>
-                  <strong className="text-wood">Int&eacute;r&ecirc;t l&eacute;gitime :</strong>{" "}
-                  am&eacute;lioration de nos services, pr&eacute;vention de la fraude,
-                  statistiques de fr&eacute;quentation
+                  <strong className="text-wood">Intérêt légitime :</strong>{" "}
+                  amélioration de nos services, prévention de la fraude,
+                  statistiques de fréquentation
                 </li>
                 <li>
-                  <strong className="text-wood">Obligation l&eacute;gale :</strong>{" "}
-                  conservation des donn&eacute;es de facturation
+                  <strong className="text-wood">Obligation légale :</strong>{" "}
+                  conservation des données de facturation
                 </li>
               </ul>
             </Section>
 
-            <Section title="5. Dur&eacute;e de conservation">
+            <Section title="5. Durée de conservation">
               <p>
-                Vos donn&eacute;es personnelles sont conserv&eacute;es pendant les dur&eacute;es
+                Vos données personnelles sont conservées pendant les durées
                 suivantes :
               </p>
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li>
-                  <strong className="text-wood">Donn&eacute;es de compte :</strong> 3 ans
-                  apr&egrave;s la derni&egrave;re activit&eacute; sur le compte
+                  <strong className="text-wood">Données de compte :</strong> 3 ans
+                  après la dernière activité sur le compte
                 </li>
                 <li>
-                  <strong className="text-wood">Donn&eacute;es de commande :</strong> 3 ans
-                  apr&egrave;s la derni&egrave;re commande, puis archivage 5 ans pour
+                  <strong className="text-wood">Données de commande :</strong> 3 ans
+                  après la dernière commande, puis archivage 5 ans pour
                   obligations comptables
                 </li>
                 <li>
-                  <strong className="text-wood">Donn&eacute;es de prospection :</strong> 3
-                  ans &agrave; compter du dernier contact
+                  <strong className="text-wood">Données de prospection :</strong> 3
+                  ans à compter du dernier contact
                 </li>
                 <li>
                   <strong className="text-wood">Cookies :</strong> 13 mois
@@ -187,58 +187,58 @@ export default function PolitiqueConfidentialitePage() {
                 </li>
               </ul>
               <p>
-                Au-del&agrave; de ces dur&eacute;es, vos donn&eacute;es sont supprim&eacute;es ou
-                anonymis&eacute;es.
+                Au-delà de ces durées, vos données sont supprimées ou
+                anonymisées.
               </p>
             </Section>
 
             <Section title="6. Droits des utilisateurs">
               <p>
-                Conform&eacute;ment au RGPD, vous disposez des droits suivants
-                concernant vos donn&eacute;es personnelles :
+                Conformément au RGPD, vous disposez des droits suivants
+                concernant vos données personnelles :
               </p>
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li>
-                  <strong className="text-wood">Droit d&apos;acc&egrave;s :</strong> obtenir
-                  la confirmation du traitement de vos donn&eacute;es et en recevoir
+                  <strong className="text-wood">Droit d&apos;accès :</strong> obtenir
+                  la confirmation du traitement de vos données et en recevoir
                   une copie
                 </li>
                 <li>
                   <strong className="text-wood">
                     Droit de rectification :
                   </strong>{" "}
-                  corriger des donn&eacute;es inexactes ou incompl&egrave;tes
+                  corriger des données inexactes ou incomplètes
                 </li>
                 <li>
                   <strong className="text-wood">
-                    Droit &agrave; l&apos;effacement :
+                    Droit à l&apos;effacement :
                   </strong>{" "}
-                  demander la suppression de vos donn&eacute;es dans les conditions
-                  pr&eacute;vues par la loi
+                  demander la suppression de vos données dans les conditions
+                  prévues par la loi
                 </li>
                 <li>
                   <strong className="text-wood">
-                    Droit &agrave; la portabilit&eacute; :
+                    Droit à la portabilité :
                   </strong>{" "}
-                  recevoir vos donn&eacute;es dans un format structur&eacute; et lisible par
+                  recevoir vos données dans un format structuré et lisible par
                   machine
                 </li>
                 <li>
                   <strong className="text-wood">
                     Droit d&apos;opposition :
                   </strong>{" "}
-                  vous opposer au traitement de vos donn&eacute;es pour des motifs
-                  l&eacute;gitimes
+                  vous opposer au traitement de vos données pour des motifs
+                  légitimes
                 </li>
                 <li>
                   <strong className="text-wood">
-                    Droit &agrave; la limitation :
+                    Droit à la limitation :
                   </strong>{" "}
-                  demander la limitation du traitement de vos donn&eacute;es
+                  demander la limitation du traitement de vos données
                 </li>
               </ul>
               <p>
-                Pour exercer vos droits, contactez-nous &agrave; l&apos;adresse :{" "}
+                Pour exercer vos droits, contactez-nous à l&apos;adresse :{" "}
                 <a
                   href="mailto:contact@paradizzio.fr"
                   className="text-primary hover:text-primary-dark font-semibold"
@@ -247,47 +247,47 @@ export default function PolitiqueConfidentialitePage() {
                 </a>
               </p>
               <p>
-                Vous disposez &eacute;galement du droit d&apos;introduire une
-                r&eacute;clamation aupr&egrave;s de la{" "}
+                Vous disposez également du droit d&apos;introduire une
+                réclamation auprès de la{" "}
                 <strong className="text-wood">CNIL</strong> (Commission Nationale
-                de l&apos;Informatique et des Libert&eacute;s) : www.cnil.fr.
+                de l&apos;Informatique et des Libertés) : www.cnil.fr.
               </p>
             </Section>
 
             <Section title="7. Cookies">
               <p>
                 Le site paradizzio.fr utilise des cookies pour assurer son
-                bon fonctionnement et am&eacute;liorer l&apos;exp&eacute;rience utilisateur.
+                bon fonctionnement et améliorer l&apos;expérience utilisateur.
               </p>
-              <p>Les cookies utilis&eacute;s se r&eacute;partissent en :</p>
+              <p>Les cookies utilisés se répartissent en :</p>
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li>
                   <strong className="text-wood">Cookies essentiels :</strong>{" "}
-                  n&eacute;cessaires au fonctionnement du site (panier, session,
+                  nécessaires au fonctionnement du site (panier, session,
                   authentification)
                 </li>
                 <li>
                   <strong className="text-wood">Cookies analytiques :</strong>{" "}
-                  mesure d&apos;audience et statistiques de fr&eacute;quentation
+                  mesure d&apos;audience et statistiques de fréquentation
                 </li>
                 <li>
                   <strong className="text-wood">Cookies marketing :</strong>{" "}
-                  personnalisation des publicit&eacute;s et suivi des performances des
+                  personnalisation des publicités et suivi des performances des
                   campagnes
                 </li>
               </ul>
               <p>
-                Lors de votre premi&egrave;re visite, un bandeau de consentement vous
+                Lors de votre première visite, un bandeau de consentement vous
                 permet d&apos;accepter ou de refuser les cookies non essentiels. Vous
-                pouvez modifier vos pr&eacute;f&eacute;rences &agrave; tout moment.
+                pouvez modifier vos préférences à tout moment.
               </p>
             </Section>
 
             <Section title="8. Sous-traitants">
               <p>
                 Pour le fonctionnement de nos services, nous faisons appel aux
-                sous-traitants suivants, qui s&apos;engagent &agrave; respecter la
-                r&eacute;glementation en mati&egrave;re de protection des donn&eacute;es :
+                sous-traitants suivants, qui s&apos;engagent à respecter la
+                réglementation en matière de protection des données :
               </p>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm border-collapse mt-2">
@@ -297,7 +297,7 @@ export default function PolitiqueConfidentialitePage() {
                         Sous-traitant
                       </th>
                       <th className="text-left py-2 pr-4 font-semibold text-wood">
-                        Finalit&eacute;
+                        Finalité
                       </th>
                       <th className="text-left py-2 font-semibold text-wood">
                         Localisation
@@ -308,49 +308,49 @@ export default function PolitiqueConfidentialitePage() {
                     <tr className="border-b border-wood/5">
                       <td className="py-2 pr-4">Stripe</td>
                       <td className="py-2 pr-4">Traitement des paiements</td>
-                      <td className="py-2">&Eacute;tats-Unis / UE</td>
+                      <td className="py-2">États-Unis / UE</td>
                     </tr>
                     <tr className="border-b border-wood/5">
                       <td className="py-2 pr-4">SendGrid</td>
                       <td className="py-2 pr-4">Envoi d&apos;emails transactionnels</td>
-                      <td className="py-2">&Eacute;tats-Unis</td>
+                      <td className="py-2">États-Unis</td>
                     </tr>
                     <tr className="border-b border-wood/5">
                       <td className="py-2 pr-4">Vercel</td>
-                      <td className="py-2 pr-4">H&eacute;bergement du site</td>
-                      <td className="py-2">&Eacute;tats-Unis / UE</td>
+                      <td className="py-2 pr-4">Hébergement du site</td>
+                      <td className="py-2">États-Unis / UE</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
               <p className="mt-3">
-                Les transferts de donn&eacute;es en dehors de l&apos;Union Europ&eacute;enne sont
-                encadr&eacute;s par des clauses contractuelles types ou des
-                m&eacute;canismes de certification approuv&eacute;s.
+                Les transferts de données en dehors de l&apos;Union Européenne sont
+                encadrés par des clauses contractuelles types ou des
+                mécanismes de certification approuvés.
               </p>
             </Section>
 
-            <Section title="9. S&eacute;curit&eacute; des donn&eacute;es">
+            <Section title="9. Sécurité des données">
               <p>
                 Nous mettons en &oelig;uvre les mesures techniques et
-                organisationnelles appropri&eacute;es pour prot&eacute;ger vos donn&eacute;es
-                personnelles contre tout acc&egrave;s non autoris&eacute;, modification,
+                organisationnelles appropriées pour protéger vos données
+                personnelles contre tout accès non autorisé, modification,
                 divulgation ou destruction. Ces mesures comprennent notamment :
               </p>
               <ul className="list-disc list-inside space-y-1 ml-2">
-                <li>Chiffrement des donn&eacute;es en transit (HTTPS/TLS)</li>
-                <li>Acc&egrave;s restreint aux donn&eacute;es personnelles</li>
-                <li>Sauvegardes r&eacute;guli&egrave;res</li>
-                <li>Mise &agrave; jour r&eacute;guli&egrave;re des syst&egrave;mes</li>
+                <li>Chiffrement des données en transit (HTTPS/TLS)</li>
+                <li>Accès restreint aux données personnelles</li>
+                <li>Sauvegardes régulières</li>
+                <li>Mise à jour régulière des systèmes</li>
               </ul>
             </Section>
 
             <Section title="10. Modification de la politique">
               <p>
-                Nous nous r&eacute;servons le droit de modifier la pr&eacute;sente Politique
-                de Confidentialit&eacute; &agrave; tout moment. Toute modification sera
-                publi&eacute;e sur cette page avec la date de mise &agrave; jour. Nous vous
-                encourageons &agrave; la consulter r&eacute;guli&egrave;rement.
+                Nous nous réservons le droit de modifier la présente Politique
+                de Confidentialité à tout moment. Toute modification sera
+                publiée sur cette page avec la date de mise à jour. Nous vous
+                encourageons à la consulter régulièrement.
               </p>
               <p>
                 En cas de modification substantielle, nous vous en informerons
@@ -364,7 +364,7 @@ export default function PolitiqueConfidentialitePage() {
                 Contact
               </h3>
               <p className="text-sm text-wood-light">
-                Pour toute question relative &agrave; la pr&eacute;sente politique ou pour
+                Pour toute question relative à la présente politique ou pour
                 exercer vos droits, vous pouvez nous contacter :
               </p>
               <ul className="text-sm text-wood-light mt-2 space-y-1">
@@ -382,7 +382,7 @@ export default function PolitiqueConfidentialitePage() {
                   Entraigues-sur-la-Sorgue
                 </li>
                 <li>
-                  T&eacute;l&eacute;phone :{" "}
+                  Téléphone :{" "}
                   <a
                     href="tel:0490481860"
                     className="text-primary hover:text-primary-dark font-semibold"

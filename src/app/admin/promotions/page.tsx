@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import toast from "react-hot-toast";
 import {
   Plus,
   Tag,
@@ -109,7 +110,8 @@ const typeIcons: Record<PromoType, typeof Percent> = {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function PromotionsPage() {
-  const [promos, setPromos] = useState<Promotion[]>(initialPromos);
+  const [promos, setPromos] = useState<Promotion[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
@@ -128,17 +130,68 @@ export default function PromotionsPage() {
   };
   const [form, setForm] = useState(emptyForm);
 
+  // ─── Fetch from API ────────────────────────────────────────────────────
+
+  const fetchPromos = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/promotions");
+      if (res.ok) {
+        const data = await res.json();
+        setPromos(Array.isArray(data) ? data.map((p: Record<string, unknown>) => ({
+          id: p.id as string,
+          code: (p.code as string) ?? "",
+          type: (p.type as PromoType) ?? "percentage",
+          description: (p.description as string) ?? "",
+          value: (p.value as number) ?? 0,
+          minAmount: (p.minAmount as number) ?? 0,
+          maxUses: (p.maxUses as number) ?? 0,
+          usedCount: (p.usedCount as number) ?? 0,
+          startDate: (p.startDate as string) ?? "",
+          endDate: (p.endDate as string) ?? "",
+          firstOrderOnly: (p.firstOrderOnly as boolean) ?? false,
+          isActive: (p.isActive as boolean) ?? true,
+          revenueGenerated: (p.revenueGenerated as number) ?? 0,
+        })) : []);
+      }
+    } catch {
+      toast.error("Erreur lors du chargement des promotions");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchPromos(); }, [fetchPromos]);
+
   // ─── Handlers ──────────────────────────────────────────────────────────
 
-  function handleToggleActive(id: string) {
-    setPromos((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, isActive: !p.isActive } : p))
-    );
+  async function handleToggleActive(id: string) {
+    const promo = promos.find(p => p.id === id);
+    if (!promo) return;
+    const newVal = !promo.isActive;
+    setPromos(prev => prev.map(p => p.id === id ? { ...p, isActive: newVal } : p));
+    try {
+      await fetch(`/api/admin/promotions/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: newVal }),
+      });
+    } catch {
+      setPromos(prev => prev.map(p => p.id === id ? { ...p, isActive: !newVal } : p));
+      toast.error("Erreur");
+    }
   }
 
-  function handleDelete(id: string) {
-    if (confirm("Supprimer cette promotion ?")) {
-      setPromos((prev) => prev.filter((p) => p.id !== id));
+  async function handleDelete(id: string) {
+    if (!confirm("Supprimer cette promotion ?")) return;
+    const backup = promos;
+    setPromos(prev => prev.filter(p => p.id !== id));
+    try {
+      const res = await fetch(`/api/admin/promotions/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      toast.success("Promotion supprimée");
+    } catch {
+      setPromos(backup);
+      toast.error("Erreur lors de la suppression");
     }
   }
 
@@ -170,46 +223,45 @@ export default function PromotionsPage() {
     setTimeout(() => setCopiedCode(null), 2000);
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!form.code.trim()) return;
 
-    if (editingId) {
-      setPromos((prev) =>
-        prev.map((p) =>
-          p.id === editingId
-            ? {
-                ...p,
-                code: form.code.toUpperCase(),
-                type: form.type,
-                value: form.value,
-                minAmount: form.minAmount,
-                maxUses: form.maxUses,
-                startDate: form.startDate,
-                endDate: form.endDate,
-                firstOrderOnly: form.firstOrderOnly,
-                isActive: form.isActive,
-              }
-            : p
-        )
-      );
-    } else {
-      const newPromo: Promotion = {
-        id: `promo-${Date.now()}`,
-        code: form.code.toUpperCase(),
-        type: form.type,
-        description: getDescription(form.type, form.value, form.minAmount),
-        value: form.value,
-        minAmount: form.minAmount,
-        maxUses: form.maxUses,
-        usedCount: 0,
-        startDate: form.startDate,
-        endDate: form.endDate,
-        firstOrderOnly: form.firstOrderOnly,
-        isActive: form.isActive,
-        revenueGenerated: 0,
-      };
-      setPromos((prev) => [...prev, newPromo]);
+    const payload = {
+      code: form.code.toUpperCase(),
+      type: form.type,
+      value: form.value,
+      minAmount: form.minAmount,
+      maxUses: form.maxUses,
+      startDate: form.startDate,
+      endDate: form.endDate,
+      firstOrderOnly: form.firstOrderOnly,
+      isActive: form.isActive,
+      description: getDescription(form.type, form.value, form.minAmount),
+    };
+
+    try {
+      if (editingId) {
+        const res = await fetch(`/api/admin/promotions/${editingId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error();
+        toast.success("Promotion mise à jour");
+      } else {
+        const res = await fetch("/api/admin/promotions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error();
+        toast.success("Promotion créée");
+      }
+      await fetchPromos();
+    } catch {
+      toast.error("Erreur lors de la sauvegarde");
     }
+
     setShowForm(false);
     setEditingId(null);
   }
