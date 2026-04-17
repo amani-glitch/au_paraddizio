@@ -144,60 +144,7 @@ interface Promotion {
   expiry: string;
 }
 
-const staticPromotions: Promotion[] = [
-  {
-    id: 2,
-    title: "Pizza du Mois",
-    subtitle: "La Printanière",
-    description:
-      "Découvrez notre création du mois : la Printanière, avec sa base crème, mozzarella, roquette, tomates cerises, parmesan et un filet de balsamique. Un pur délice de saison !",
-    price: 12.9,
-    cta: {
-      label: "Voir la pizza du mois",
-      href: "/menu/pizza-du-mois-printaniere",
-    },
-    badge: "Offre du mois",
-    icon: <Star className="w-7 h-7" />,
-    iconBg: "bg-primary/10 text-primary",
-    borderColor: "border-primary",
-    badgeStyle: "bg-primary/10 text-primary",
-    ctaStyle: "bg-primary hover:bg-primary/90 text-white",
-    expiry: "Jusqu'à fin du mois",
-  },
-  {
-    id: 3,
-    title: "Menu Formule",
-    subtitle: "Pizza + Boisson + Dessert à 15,90 €",
-    description:
-      "Composez votre menu complet : choisissez une pizza parmi notre sélection, ajoutez une boisson (33 cl) et un dessert maison pour seulement 15,90 €. Une formule gourmande à petit prix !",
-    cta: {
-      label: "Découvrir les formules",
-      href: "/menu?category=menus-formules",
-    },
-    badge: "Économique",
-    icon: <Gift className="w-7 h-7" />,
-    iconBg: "bg-secondary/10 text-secondary",
-    borderColor: "border-secondary",
-    badgeStyle: "bg-secondary/10 text-secondary",
-    ctaStyle: "bg-secondary hover:bg-secondary/90 text-white",
-    expiry: "Offre permanente",
-  },
-  {
-    id: 4,
-    title: "Livraison Gratuite",
-    subtitle: "Dès 25 € de commande à Entraigues-sur-la-Sorgue",
-    description:
-      "Pour toute commande supérieure à 25 € à Entraigues-sur-la-Sorgue, la livraison est offerte ! Profitez de nos pizzas artisanales livrées chaudes à votre porte, sans frais supplémentaires.",
-    cta: { label: "Commander en livraison", href: "/menu" },
-    badge: "Livraison",
-    icon: <Truck className="w-7 h-7" />,
-    iconBg: "bg-accent/10 text-accent",
-    borderColor: "border-accent",
-    badgeStyle: "bg-accent/10 text-accent",
-    ctaStyle: "bg-accent hover:bg-accent/90 text-white",
-    expiry: "Offre permanente",
-  },
-];
+// No more static promotions - everything from Firestore
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  Loyalty steps                                                            */
@@ -249,20 +196,18 @@ function apiPromoToPromotion(p: ApiPromo, index: number): Promotion {
 }
 
 export default function PromotionsPage() {
-  const [promotions, setPromotions] = useState<Promotion[]>(staticPromotions);
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/promotions")
       .then((r) => r.ok ? r.json() : [])
       .then((apiPromos: ApiPromo[]) => {
         const activePromos = (Array.isArray(apiPromos) ? apiPromos : []).filter((p) => p.isActive);
-        const dbPromotions = activePromos.map(apiPromoToPromotion);
-        // DB promos first, then static marketing promos
-        setPromotions([...dbPromotions, ...staticPromotions]);
+        setPromotions(activePromos.map(apiPromoToPromotion));
       })
-      .catch(() => {
-        // Fallback to static only
-      });
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -302,6 +247,17 @@ export default function PromotionsPage() {
       {/* ── Promotions grid ─────────────────────────────────────────────── */}
       <section className="py-16 sm:py-20 bg-cream">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          {loading ? (
+            <div className="py-16 text-center">
+              <div className="h-8 w-8 mx-auto animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+          ) : promotions.length === 0 ? (
+            <div className="py-16 text-center">
+              <Tag className="h-12 w-12 mx-auto text-gray-300" />
+              <p className="mt-4 text-gray-500">Aucune promotion en cours pour le moment.</p>
+              <p className="text-sm text-gray-400">Revenez bientôt pour découvrir nos offres !</p>
+            </div>
+          ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {promotions.map((promo) => (
               <div
@@ -376,6 +332,7 @@ export default function PromotionsPage() {
               </div>
             ))}
           </div>
+          )}
         </div>
       </section>
 

@@ -78,9 +78,13 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <Link href={`/menu/${product.slug}`} className="block">
       <div className="group relative flex flex-col overflow-hidden rounded-xl bg-white shadow-sm transition-all duration-200 hover:shadow-md hover:scale-[1.02]">
-        {/* Image placeholder */}
-        <div className="relative flex h-48 items-center justify-center bg-cream">
-          <span className="text-6xl">{getCategoryEmoji(product.categoryId)}</span>
+        {/* Image */}
+        <div className="relative flex h-48 items-center justify-center bg-cream overflow-hidden">
+          {product.image && !product.image.endsWith(".jpg") && product.image.startsWith("http") || product.image?.startsWith("data:") ? (
+            <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+          ) : (
+            <span className="text-6xl">{getCategoryEmoji(product.categoryId)}</span>
+          )}
 
           {/* Badges */}
           <div className="absolute right-2 top-2 flex flex-col gap-1">

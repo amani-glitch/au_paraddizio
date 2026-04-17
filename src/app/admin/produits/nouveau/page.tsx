@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, X, Save } from "lucide-react";
+import { ArrowLeft, Plus, X, Save, Upload, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 import type { Category } from "@/types";
@@ -34,6 +34,8 @@ export default function AdminNewProductPage() {
     { name: "40 cm", price: "" },
   ]);
   const [supplements, setSupplements] = useState<{ name: string; price: string; category: string }[]>([]);
+  const [imageUrl, setImageUrl] = useState("");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isActive, setIsActive] = useState(true);
   const [isNew, setIsNew] = useState(false);
   const [isBestSeller, setIsBestSeller] = useState(false);
@@ -41,6 +43,22 @@ export default function AdminNewProductPage() {
   const [isPizzaOfMonth, setIsPizzaOfMonth] = useState(false);
   const [allergens, setAllergens] = useState<string[]>([]);
   const [dietary, setDietary] = useState<string[]>([]);
+
+  const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("L'image ne doit pas dépasser 2 Mo");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const result = ev.target?.result as string;
+      setImagePreview(result);
+      setImageUrl(result); // Store as data URL
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleNameChange = (val: string) => {
     setName(val);
@@ -101,8 +119,8 @@ export default function AdminNewProductPage() {
         isPizzaOfMonth,
         allergens: allergens.map((a) => a.toLowerCase()),
         dietary: dietary.map((d) => d.toLowerCase()),
-        image: "",
-        images: [],
+        image: imageUrl || "",
+        images: imageUrl ? [imageUrl] : [],
         order: 99,
       };
 
@@ -166,6 +184,48 @@ export default function AdminNewProductPage() {
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700">Prix de base (€) *</label>
                 <input type="number" step="0.01" min="0" value={basePrice} onChange={(e) => setBasePrice(e.target.value)} required className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none" placeholder="8.50" />
+              </div>
+            </div>
+          </div>
+
+          {/* Section: Image */}
+          <div className="rounded-xl bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-gray-900">Image du produit</h2>
+            <div className="flex items-start gap-6">
+              {/* Preview */}
+              <div className="flex h-32 w-32 shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 overflow-hidden">
+                {imagePreview ? (
+                  <img src={imagePreview} alt="Aperçu" className="h-full w-full object-cover" />
+                ) : (
+                  <ImageIcon className="h-10 w-10 text-gray-300" />
+                )}
+              </div>
+              <div className="flex-1 space-y-3">
+                <p className="text-sm text-gray-500">
+                  Uploadez une image (max 2 Mo) ou entrez une URL. Si aucune image n&apos;est fournie, l&apos;emoji de la catégorie sera affiché.
+                </p>
+                {/* File upload */}
+                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                  <Upload className="h-4 w-4" />
+                  Choisir une image
+                  <input type="file" accept="image/*" onChange={handleImageFile} className="hidden" />
+                </label>
+                {/* Or URL */}
+                <div>
+                  <label className="mb-1 block text-xs text-gray-500">Ou entrez une URL d&apos;image</label>
+                  <input
+                    type="url"
+                    value={imageUrl.startsWith("data:") ? "" : imageUrl}
+                    onChange={(e) => { setImageUrl(e.target.value); setImagePreview(e.target.value || null); }}
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-primary focus:outline-none"
+                    placeholder="https://exemple.com/image.jpg"
+                  />
+                </div>
+                {imagePreview && (
+                  <button type="button" onClick={() => { setImageUrl(""); setImagePreview(null); }} className="text-xs text-red-500 hover:underline">
+                    Supprimer l&apos;image
+                  </button>
+                )}
               </div>
             </div>
           </div>
