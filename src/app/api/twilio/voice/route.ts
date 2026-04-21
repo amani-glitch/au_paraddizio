@@ -20,17 +20,16 @@ export async function POST(request: NextRequest) {
   // Respond with TwiML: greet and start listening
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say language="fr-FR" voice="Google.fr-FR-Wavenet-A">
-    Bonjour et bienvenue chez Au Paradizzio, la pizzeria artisanale d'Entraigues-sur-la-Sorgue !
-    Je suis votre assistant de commande. Comment puis-je vous aider ?
+  <Say language="fr-FR" voice="Google.fr-FR-Neural2-A">
+    Bonjour, bienvenue Au Paradizzio ! Qu'est-ce qui vous ferait plaisir ?
   </Say>
-  <Gather input="speech" language="fr-FR" speechTimeout="3" timeout="10" action="/api/twilio/gather" method="POST">
-    <Say language="fr-FR" voice="Google.fr-FR-Wavenet-A">
-      Vous pouvez me demander le menu, commander une pizza, ou poser une question.
+  <Gather input="speech" language="fr-FR" speechModel="experimental_conversations" enhanced="true" speechTimeout="auto" bargeIn="true" timeout="10" action="/api/twilio/gather" method="POST">
+    <Say language="fr-FR" voice="Google.fr-FR-Neural2-A">
+      Dites-moi, je vous ecoute.
     </Say>
   </Gather>
-  <Say language="fr-FR" voice="Google.fr-FR-Wavenet-A">
-    Je n'ai pas entendu. N'hésitez pas à rappeler. Au revoir !
+  <Say language="fr-FR" voice="Google.fr-FR-Neural2-A">
+    Je n'ai pas entendu. N'hesitez pas a rappeler. Au revoir !
   </Say>
 </Response>`;
 

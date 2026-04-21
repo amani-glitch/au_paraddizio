@@ -73,12 +73,12 @@ export async function POST(request: NextRequest) {
     // No speech detected, ask again
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Gather input="speech" language="fr-FR" speechTimeout="3" timeout="10" action="/api/twilio/gather" method="POST">
-    <Say language="fr-FR" voice="Google.fr-FR-Wavenet-A">
-      Excusez-moi, je n'ai pas entendu. Pouvez-vous répéter ?
+  <Gather input="speech" language="fr-FR" speechModel="experimental_conversations" enhanced="true" speechTimeout="auto" bargeIn="true" timeout="10" action="/api/twilio/gather" method="POST">
+    <Say language="fr-FR" voice="Google.fr-FR-Neural2-A">
+      Excusez-moi, je n'ai pas entendu. Pouvez-vous repeter ?
     </Say>
   </Gather>
-  <Say language="fr-FR" voice="Google.fr-FR-Wavenet-A">Au revoir !</Say>
+  <Say language="fr-FR" voice="Google.fr-FR-Neural2-A">Au revoir !</Say>
 </Response>`;
     return new NextResponse(twiml, { headers: { "Content-Type": "text/xml" } });
   }
@@ -163,9 +163,9 @@ export async function POST(request: NextRequest) {
     if (orderConfirmation) {
       const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say language="fr-FR" voice="Google.fr-FR-Wavenet-A">
+  <Say language="fr-FR" voice="Google.fr-FR-Neural2-A">
     ${escapeXml(spokenText)}
-    Merci pour votre commande chez Au Paradizzio. À très bientôt !
+    Merci pour votre commande chez Au Paradizzio. A tres bientot !
   </Say>
   <Hangup/>
 </Response>`;
@@ -175,13 +175,13 @@ export async function POST(request: NextRequest) {
     // Continue the conversation
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Gather input="speech" language="fr-FR" speechTimeout="3" timeout="15" action="/api/twilio/gather" method="POST">
-    <Say language="fr-FR" voice="Google.fr-FR-Wavenet-A">
+  <Gather input="speech" language="fr-FR" speechModel="experimental_conversations" enhanced="true" speechTimeout="auto" bargeIn="true" timeout="15" action="/api/twilio/gather" method="POST">
+    <Say language="fr-FR" voice="Google.fr-FR-Neural2-A">
       ${escapeXml(spokenText)}
     </Say>
   </Gather>
-  <Say language="fr-FR" voice="Google.fr-FR-Wavenet-A">
-    Êtes-vous toujours là ? N'hésitez pas à rappeler. Au revoir !
+  <Say language="fr-FR" voice="Google.fr-FR-Neural2-A">
+    Etes-vous toujours la ? N'hesitez pas a rappeler. Au revoir !
   </Say>
 </Response>`;
 
@@ -190,8 +190,8 @@ export async function POST(request: NextRequest) {
     console.error("Twilio gather error:", error);
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say language="fr-FR" voice="Google.fr-FR-Wavenet-A">
-    Désolé, j'ai rencontré un problème technique. Veuillez rappeler dans quelques instants. Au revoir.
+  <Say language="fr-FR" voice="Google.fr-FR-Neural2-A">
+    Desole, j'ai rencontre un probleme technique. Veuillez rappeler dans quelques instants. Au revoir.
   </Say>
   <Hangup/>
 </Response>`;
